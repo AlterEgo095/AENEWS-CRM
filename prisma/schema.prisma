@@ -1,8 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ============================================================
+// AENEWS Enterprise OS — Business Operating System
+// Comprehensive Database Schema (SQLite via Prisma)
+// ============================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +12,526 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum OrganizationType {
+  COMPANY
+  NONPROFIT
+  GOVERNMENT
+  EDUCATION
+  HEALTHCARE
+  OTHER
 }
 
-model Post {
+enum PluginCategory {
+  CRM
+  ERP
+  HR
+  FINANCE
+  STOCK
+  HEALTHCARE
+  PHARMACY
+  EDUCATION
+  REAL_ESTATE
+  MANUFACTURING
+  MARKETING
+  SUPPORT
+  PROJECT
+  ECOMMERCE
+  COMMUNICATION
+  ANALYTICS
+  AUTOMATION
+  AI_ML
+  INTEGRATION
+  SECURITY
+  CUSTOM
+  OTHER
+}
+
+enum PluginStatus {
+  AVAILABLE
+  INSTALLED
+  ACTIVE
+  DISABLED
+}
+
+enum InstalledPluginStatus {
+  INSTALLED
+  ACTIVE
+  DISABLED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum WorkflowRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+// ============================================================
+// 1. MULTI-TENANCY — Tenant represents a workspace / organization
+// ============================================================
+
+model Tenant {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  name      String
+  slug      String   @unique
+  domain    String?
+  logoUrl   String?
+  plan      String   @default("free")             // "free" | "starter" | "pro" | "enterprise"
+  status    String   @default("active")           // "active" | "suspended" | "trial"
+  /// JSON string containing tenant-level settings
+  settings  String   @default("{}")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  organizations   Organization[]
+  users           User[]
+  roles           Role[]
+  userRoles       UserRole[]
+  plugins         Plugin[]
+  installedPlugins InstalledPlugin[]
+  customObjects   CustomObject[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  files           File[]
+  chatThreads     ChatThread[]
+  chatMessages    ChatMessage[]
+  workflows       Workflow[]
+  workflowRuns    WorkflowRun[]
+  subscriptions   Subscription[]
+  eventLogs       EventLog[]
+  apiKeys         ApiKey[]
+}
+
+// ============================================================
+// 2. USERS & AUTH
+// ============================================================
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  firstName   String?
+  lastName    String?
+  avatarUrl   String?
+  phone       String?
+  locale      String    @default("en")
+  timezone    String    @default("UTC")
+  lastLoginAt DateTime?
+  isActive    Boolean   @default(true)
+  tenantId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessions     Session[]
+  apiKeys      ApiKey[]
+  userRoles    UserRole[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  files        File[]
+  chatThreads  ChatThread[]
+
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  tenantId    String
+  name        String
+  /// JSON string containing permission definitions
+  permissions String   @default("[]")
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// 3. ORGANIZATIONS STRUCTURE
+// ============================================================
+
+model Organization {
+  id       String           @id @default(cuid())
+  tenantId String
+  name     String
+  type     OrganizationType @default(COMPANY)
+  address  String?
+  city     String?
+  country  String?
+  phone    String?
+  email    String?
+  website  String?
+  logoUrl  String?
+  /// Self-referencing for org hierarchy (parent)
+  parentId String?
+  /// JSON string containing org-level settings
+  settings String           @default("{}")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent Organization?  @relation("OrgHierarchy", fields: [parentId], references: [id])
+  children Organization[] @relation("OrgHierarchy")
+
+  @@index([tenantId])
+  @@index([parentId])
+}
+
+// ============================================================
+// 4. ROLES & PERMISSIONS (RBAC)
+// ============================================================
+
+model Role {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  /// JSON string containing permission definitions
+  permissions String   @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles  UserRole[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, tenantId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// 5. PLUGIN REGISTRY
+// ============================================================
+
+model Plugin {
+  id           String          @id @default(cuid())
+  name         String
+  slug         String          @unique
+  description  String?
+  version      String          @default("0.0.1")
+  iconUrl      String?
+  author       String?
+  category     PluginCategory  @default(CUSTOM)
+  status       PluginStatus    @default(AVAILABLE)
+  /// JSON string containing plugin settings
+  settings     String          @default("{}")
+  /// JSON string describing plugin capabilities
+  capabilities String          @default("[]")
+  /// Nullable — null means this is a global / marketplace plugin
+  tenantId     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  tenant            Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  installedPlugins  InstalledPlugin[]
+  customObjects     CustomObject[]
+
+  @@index([tenantId])
+  @@index([slug])
+  @@index([category])
+}
+
+model InstalledPlugin {
+  id         String               @id @default(cuid())
+  tenantId   String
+  pluginId   String
+  version    String               @default("0.0.1")
+  status     InstalledPluginStatus @default(INSTALLED)
+  /// JSON string containing tenant-specific plugin settings
+  settings   String               @default("{}")
+  installedAt DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plugin Plugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, pluginId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// 6. CUSTOM OBJECTS (Dynamic entities like Twenty CRM)
+// ============================================================
+
+model CustomObject {
+  id           String   @id @default(cuid())
+  tenantId     String
+  nameSingular String
+  namePlural   String
+  labelSingular String
+  labelPlural  String
+  icon         String?
+  /// Nullable — links to a plugin that provides this custom object
+  pluginId     String?
+  position     Int      @default(0)
+  /// JSON string defining the fields schema
+  fields       String   @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plugin Plugin? @relation(fields: [pluginId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, nameSingular])
+  @@index([tenantId])
+}
+
+// ============================================================
+// 7. NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      String
+  title     String
+  message   String?
+  /// JSON string for additional notification data
+  data      String   @default("{}")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([isRead])
+  @@index([userId, isRead])
+}
+
+// ============================================================
+// 8. ACTIVITY / AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  /// JSON string for additional metadata
+  metadata   String   @default("{}")
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ============================================================
+// 9. FILES
+// ============================================================
+
+model File {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String
+  name       String
+  mimeType   String
+  size       Int      @default(0)
+  url        String
+  path       String?
+  entityType String?   // e.g. "User", "Organization", "CustomObject"
+  entityId   String?
+  createdAt  DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+// ============================================================
+// 10. AI CHAT
+// ============================================================
+
+model ChatThread {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  title     String?
+  model     String   @default("gpt-4o")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  threadId    String
+  tenantId    String
+  role        ChatRole @default(USER)
+  content     String
+  /// JSON string listing tools that were called during generation
+  toolsCalled String   @default("[]")
+  createdAt   DateTime @default(now())
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// 11. AUTOMATION / WORKFLOWS
+// ============================================================
+
+model Workflow {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  description String?
+  /// JSON string defining the trigger configuration
+  trigger    String   @default("{}")
+  /// JSON string defining the workflow steps
+  steps      String   @default("[]")
+  isActive   Boolean  @default(false)
+  runCount   Int      @default(0)
+  lastRunAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workflowRuns WorkflowRun[]
+
+  @@index([tenantId])
+  @@index([isActive])
+}
+
+model WorkflowRun {
+  id         String            @id @default(cuid())
+  workflowId String
+  tenantId   String
+  status     WorkflowRunStatus @default(RUNNING)
+  /// JSON string containing the run input
+  input      String            @default("{}")
+  /// JSON string containing the run output
+  output     String?
+  error      String?
+  /// Duration in milliseconds
+  duration   Int?
+  createdAt  DateTime          @default(now())
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================
+// 12. BILLING / SUBSCRIPTIONS
+// ============================================================
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  tenantId             String
+  plan                 String             @default("free")  // "free" | "starter" | "pro" | "enterprise"
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// 13. EVENT LOG (Event Bus persistence)
+// ============================================================
+
+model EventLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  eventType   String
+  /// JSON string containing the full event payload
+  payload     String   @default("{}")
+  /// Nullable — identifies the plugin that emitted the event
+  sourcePlugin String?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([eventType])
+  @@index([sourcePlugin])
+  @@index([createdAt])
 }
