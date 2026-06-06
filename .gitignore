@@ -27,7 +27,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (keep .env.example)
+# env files
 .env
 .env*.local
 
@@ -48,14 +48,16 @@ db/*.db-journal
 # dev logs
 dev.log
 dev*.log
-.zscripts/
-scripts/run-seed.ts
-download/
 
 # sandbox / non-project files
 skills/
 examples/
 worklog.md
+.zscripts/
+scripts/run-seed.ts
+download/
+Caddyfile
+mini-services/
 
 # lock files (bun generates bun.lock)
 bun.lock
