@@ -169,6 +169,7 @@ model ApiKey {
   userId      String
   tenantId    String
   name        String
+  key         String    @unique
   /// JSON string containing permission definitions
   permissions String   @default("[]")
   expiresAt   DateTime?

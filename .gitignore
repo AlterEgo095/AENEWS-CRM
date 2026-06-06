@@ -61,3 +61,4 @@ mini-services/
 
 # lock files (bun generates bun.lock)
 bun.lock
+agent-ctx

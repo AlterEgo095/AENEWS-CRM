@@ -29,6 +29,7 @@ import {
 import { useTheme } from 'next-themes';
 
 import { useAppStore } from '@/store/app-store';
+import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
 import {
@@ -155,6 +156,15 @@ const navSections: NavSection[] = [
 
 function AppSidebar() {
   const { currentView, setCurrentView } = useAppStore();
+  const { user } = useAuthStore();
+
+  const initials = user
+    ? `${(user.firstName?.[0] || '').toUpperCase()}${(user.lastName?.[0] || '').toUpperCase()}`
+    : 'AU';
+  const displayName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    : 'Admin User';
+  const roleLabel = user?.roles?.[0] || 'Member';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -232,15 +242,15 @@ function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src="/logo.svg" alt="Admin" />
+                <AvatarImage src={user?.avatarUrl || undefined} alt={displayName} />
                 <AvatarFallback className="rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                  AD
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold">Admin User</span>
+                <span className="truncate font-semibold">{displayName}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  Organization Admin
+                  {roleLabel}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -256,6 +266,14 @@ function AppSidebar() {
 function Header() {
   const { currentView, setCurrentView } = useAppStore();
   const { setTheme, theme } = useTheme();
+  const { user, logout } = useAuthStore();
+
+  const initials = user
+    ? `${(user.firstName?.[0] || '').toUpperCase()}${(user.lastName?.[0] || '').toUpperCase()}`
+    : 'AU';
+  const displayName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    : 'Admin User';
 
   const breadcrumbSegments = useMemo(() => {
     const allItems = navSections.flatMap((s) => s.items);
@@ -361,7 +379,7 @@ function Header() {
               Dark
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setTheme('system')}>
-              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <Moon className="mr-2 h-4 w-4" />
               System
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -371,14 +389,28 @@ function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.avatarUrl || undefined} alt={displayName} />
                 <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs">
-                  AD
+                  {initials}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuItem>
+            <div className="flex items-center gap-2 p-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.avatarUrl || undefined} alt={displayName} />
+                <AvatarFallback className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-xs">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col space-y-0.5">
+                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <p className="text-xs text-muted-foreground leading-none">{user?.email}</p>
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setCurrentView('settings')}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
@@ -387,7 +419,7 @@ function Header() {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={() => logout()}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </DropdownMenuItem>

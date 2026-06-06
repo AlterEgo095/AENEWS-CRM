@@ -1,0 +1,240 @@
+{
+  "aenews": "1",
+  "id": "aenews-crm-contacts",
+  "name": "CRM Contacts",
+  "slug": "crm-contacts",
+  "version": "1.0.0",
+  "description": "Full-featured contact management for CRM — create, search, tag, and track contacts with profiles, communication history, and team collaboration.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "repository": "https://github.com/aenews/plugin-crm-contacts",
+  "homepage": "https://docs.aenews.com/plugins/crm-contacts",
+
+  "coreVersion": "0.1.0",
+
+  "dependencies": [
+    {
+      "pluginId": "aenews-crm-companies",
+      "version": "^1.0.0",
+      "optional": true
+    }
+  ],
+
+  "capabilities": [
+    {
+      "type": "object",
+      "name": "contacts",
+      "description": "Provides the Contact data object — the central entity for CRM contacts with full profile management."
+    },
+    {
+      "type": "view",
+      "name": "contacts-list",
+      "description": "Adds the Contacts list view with search, filter, sort, and bulk actions."
+    },
+    {
+      "type": "view",
+      "name": "contacts-detail",
+      "description": "Adds the Contact detail view with profile, timeline, notes, and related records."
+    },
+    {
+      "type": "tool",
+      "name": "contact-tools",
+      "description": "Registers AI-callable tools for creating, searching, and managing contacts."
+    }
+  ],
+
+  "entry": {
+    "server": "./dist/server.js",
+    "client": "./dist/client.js"
+  },
+
+  "migrations": [
+    {
+      "version": "1.0.0",
+      "name": "create_contacts_table",
+      "up": "CREATE TABLE IF NOT EXISTS plugin_crm_contacts (id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, first_name TEXT NOT NULL, last_name TEXT NOT NULL, email TEXT UNIQUE, phone TEXT, company TEXT, title TEXT, tags TEXT DEFAULT '[]', status TEXT DEFAULT 'active', metadata TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))); CREATE INDEX IF NOT EXISTS idx_contacts_tenant ON plugin_crm_contacts(tenant_id); CREATE INDEX IF NOT EXISTS idx_contacts_name ON plugin_crm_contacts(first_name, last_name); CREATE INDEX IF NOT EXISTS idx_contacts_email ON plugin_crm_contacts(email);",
+      "down": "DROP TABLE IF EXISTS plugin_crm_contacts;"
+    }
+  ],
+
+  "permissions": [
+    {
+      "id": "crm.contacts.read",
+      "name": "Read Contacts",
+      "description": "Allows viewing contact profiles, lists, and details.",
+      "category": "crm"
+    },
+    {
+      "id": "crm.contacts.write",
+      "name": "Write Contacts",
+      "description": "Allows creating, editing, and deleting contacts.",
+      "category": "crm"
+    }
+  ],
+
+  "settings": [
+    {
+      "key": "default_view",
+      "type": "select",
+      "label": "Default Contacts View",
+      "description": "The default layout shown when navigating to the Contacts page.",
+      "defaultValue": "table",
+      "options": [
+        { "label": "Table View", "value": "table" },
+        { "label": "Card View", "value": "cards" },
+        { "label": "Kanban Board", "value": "kanban" }
+      ],
+      "required": false,
+      "scope": "tenant"
+    },
+    {
+      "key": "fields_order",
+      "type": "json",
+      "label": "Custom Field Order",
+      "description": "Customize the order of fields in the contact detail view. Provide an array of field keys.",
+      "defaultValue": ["firstName", "lastName", "email", "phone", "company", "title"],
+      "required": false,
+      "scope": "tenant"
+    },
+    {
+      "key": "auto_tag_on_create",
+      "type": "boolean",
+      "label": "Auto-tag New Contacts",
+      "description": "Automatically assign default tags to newly created contacts.",
+      "defaultValue": false,
+      "required": false,
+      "scope": "tenant"
+    },
+    {
+      "key": "default_tags",
+      "type": "json",
+      "label": "Default Tags for New Contacts",
+      "description": "Array of tag names to apply when auto-tag is enabled.",
+      "defaultValue": ["new"],
+      "required": false,
+      "scope": "tenant"
+    }
+  ],
+
+  "menus": [
+    {
+      "id": "crm-contacts",
+      "label": "Contacts",
+      "icon": "Users",
+      "href": "/crm/contacts",
+      "section": "CRM",
+      "order": 1,
+      "permission": "crm.contacts.read"
+    },
+    {
+      "id": "crm-contacts-new",
+      "label": "New Contact",
+      "icon": "UserPlus",
+      "href": "/crm/contacts/new",
+      "section": "CRM",
+      "order": 2,
+      "parentId": "crm-contacts",
+      "permission": "crm.contacts.write"
+    }
+  ],
+
+  "events": [
+    {
+      "type": "contact.created",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string" },
+          "company": { "type": "string" },
+          "createdBy": { "type": "string" },
+          "tenantId": { "type": "string" }
+        },
+        "required": ["id", "firstName", "lastName", "tenantId"]
+      },
+      "description": "Emitted when a new contact is created in the system."
+    },
+    {
+      "type": "contact.updated",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string" },
+          "changedFields": { "type": "array", "items": { "type": "string" } },
+          "updatedBy": { "type": "string" },
+          "tenantId": { "type": "string" }
+        },
+        "required": ["id", "tenantId"]
+      },
+      "description": "Emitted when an existing contact is modified."
+    },
+    {
+      "type": "contact.deleted",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "deletedBy": { "type": "string" },
+          "tenantId": { "type": "string" }
+        },
+        "required": ["id", "tenantId"]
+      },
+      "description": "Emitted when a contact is permanently deleted."
+    }
+  ],
+
+  "consumes": [
+    "company.created",
+    "company.updated",
+    "notification.send"
+  ],
+
+  "search": {
+    "entities": [
+      {
+        "name": "Contacts",
+        "table": "plugin_crm_contacts",
+        "fields": ["first_name", "last_name", "email", "phone", "company", "title"],
+        "labelField": "full_name"
+      }
+    ]
+  },
+
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/contacts",
+      "handler": "listContacts",
+      "permissions": ["crm.contacts.read"]
+    },
+    {
+      "method": "GET",
+      "path": "/contacts/:id",
+      "handler": "getContact",
+      "permissions": ["crm.contacts.read"]
+    },
+    {
+      "method": "POST",
+      "path": "/contacts",
+      "handler": "createContact",
+      "permissions": ["crm.contacts.write"]
+    },
+    {
+      "method": "PUT",
+      "path": "/contacts/:id",
+      "handler": "updateContact",
+      "permissions": ["crm.contacts.write"]
+    },
+    {
+      "method": "DELETE",
+      "path": "/contacts/:id",
+      "handler": "deleteContact",
+      "permissions": ["crm.contacts.write"]
+    }
+  ]
+}

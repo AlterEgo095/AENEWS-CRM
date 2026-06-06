@@ -1,27 +1,35 @@
 <p align="center">
   <a href="https://github.com/AlterEgo095/AENEWS-CRM">
-    <img src="https://img.shields.io/badge/AENEWS-Enterprise%20OS-emerald?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMiAyTDE1LjA5IDguMjZMMjIgOUwyNyAyNkw1LjkxIDE3Ljc0bC02LjkxLTYuNDdIMkwyMiAyWiIvPjwvc3ZnPg==" alt="AENEWS Enterprise OS">
+    <img src="https://img.shields.io/badge/AENEWS-Enterprise%20OS-emerald?style=for-the-badge" alt="AENEWS Enterprise OS">
   </a>
 </p>
 
 <h1 align="center">AENEWS Enterprise OS</h1>
 
 <p align="center">
-  <strong>The AI-Native Business Operating System</strong>
+  <strong>The Plugin-First AI-Native Business Operating System</strong>
 </p>
 
 <p align="center">
-  A unified platform combining CRM, ERP, HR, Healthcare, Education, and more — powered by a plugin-first architecture and AI orchestration.
+  A platform to build <em>any</em> business. CRM, ERP, HR, Healthcare, Pharmacy, Education, Real Estate, Manufacturing — all as plugins. One core. Zero business logic in the kernel.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16">
-  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript 5">
   <img src="https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss" alt="Tailwind CSS 4">
-  <img src="https://img.shields.io/badge/shadcn/ui-New_York-black" alt="shadcn/ui">
+  <img src="https://img.shields.io/badge/shadcn%2Fui-New_York-black" alt="shadcn/ui">
   <img src="https://img.shields.io/badge/Prisma-2d3748?logo=prisma" alt="Prisma">
-  <img src="https://img.shields.io/badge/License-AGPL--3.0-green" alt="License">
+  <img src="https://img.shields.io/badge/Zustand-orange?logo=react" alt="Zustand">
 </p>
+
+---
+
+## ⚠️ Status: Core Development
+
+AENEWS is currently in **Core development**. The foundation is being built — no business modules yet. The goal is a rock-solid platform engine that allows any plugin to be added without touching the core.
+
+> **"Arrête temporairement le développement des fonctionnalités visibles et investis d'abord dans un Plugin SDK, un Plugin Loader, un Event Bus, un AI Gateway (MCP compatible), un Module Registry et un système de découverte automatique des capacités."**
 
 ---
 
@@ -29,86 +37,234 @@
 
 AENEWS Enterprise OS is **NOT** a CRM. It is a **Business Operating System** designed to manage any business sector on a single technical foundation.
 
-> **One core. One AI. One user base. Hundreds of activatable modules.**
-
 ### Core Principles
 
-1. **Plugin-First** — The core knows no business logic. Everything is a plugin.
-2. **AI-Native** — AI is a transversal orchestrator that discovers plugin capabilities dynamically.
-3. **Event-Driven** — All inter-plugin communication passes through an event bus. Zero coupling.
-4. **Multi-Tenant** — Full workspace isolation with RBAC/ABAC permissions.
-5. **Extensible** — SDK + Marketplace + CLI for third-party developers.
+1. **Plugin-First** — The core knows **zero** business logic. Everything is a plugin.
+2. **AI-Native** — AI discovers plugin capabilities dynamically via the MCP Gateway. Zero hardcoded AI↔plugin coupling.
+3. **Event-Driven** — All inter-plugin communication passes through the Event Bus. Zero coupling.
+4. **Multi-Tenant** — Full workspace isolation with RBAC permissions.
+5. **Extensible** — SDK + CLI + Marketplace. Third-party developers build plugins.
 
 ---
 
-## Architecture
+## Core Architecture
 
 ```
-AENEWS OS
-├── Core
-│   ├── Authentication (JWT, OAuth, SSO)
-│   ├── Multi-Tenant Workspaces
-│   ├── Organizations & Teams
-│   ├── RBAC Permissions
-│   ├── File Storage
-│   ├── Full-Text Search
-│   ├── Notifications
-│   ├── AI Orchestrator (MCP Gateway)
-│   ├── Automation / Workflows
-│   ├── Event Bus
-│   ├── Billing (Stripe)
-│   ├── Plugin Registry
-│   └── Marketplace
+src/core/
+├── plugin-sdk/            # Plugin Manifest spec + definePlugin() API
+│   ├── manifest.ts        # TypeScript interfaces for plugin.json
+│   ├── index.ts           # SDK: definePlugin(), validateManifest()
+│   └── templates/         # Templates for plugin developers
 │
-├── SDK
-│   ├── Plugin Definition API
-│   ├── Tool Registration API
-│   ├── CLI (create-aenews-app)
-│   └── Type-safe Client SDK
+├── plugin-loader/         # Plugin lifecycle engine
+│   └── index.ts           # scan → resolve deps → load → install → activate
 │
-├── Installed Apps (Plugins)
-│   ├── CRM (Contacts, Companies, Deals, Pipeline, Activities)
-│   ├── ERP (Finance, Accounting, Inventory, Procurement)
-│   ├── HR (Employees, Payroll, Recruitment, Performance)
-│   ├── Healthcare (Patients, Doctors, Prescriptions, Lab)
-│   ├── Pharmacy (Medicines, Expiry, Stock, POS)
-│   ├── Education (Students, Exams, Grades, Attendance)
-│   ├── Real Estate (Properties, Contracts, Rentals, Tenants)
-│   ├── Manufacturing (Machines, Production, Quality, IoT)
-│   ├── Marketing (Campaigns, Email, SMS, Social Media)
-│   ├── Support (Tickets, Chat, Knowledge Base)
-│   ├── Projects (Kanban, Gantt, Scrum, Sprints)
-│   ├── eCommerce (Catalog, Cart, Payments, Delivery)
-│   └── ... (infinite extensibility via Marketplace)
+├── plugin-registry/       # Plugin registry & marketplace
 │
-└── Infrastructure
-    └── PostgreSQL + pgvector (single DB for everything)
+├── tool-registry/         # Central registry of AI-callable tools
+│   └── index.ts           # register/get/invoke + MCP export
+│
+├── event-store/           # Persistent event storage
+│   └── index.ts           # persist / replay / query / aggregate
+│
+├── mcp/                   # MCP Gateway (AI ↔ Plugin bridge)
+│   └── index.ts           # tool discovery + execution + agentic loop
+│
+├── ai-gateway/            # AI provider abstraction
+│   └── index.ts           # multi-provider LLM adapter
+│
+├── auth/                  # Authentication system
+│   └── index.ts           # JWT sessions + API keys
+│
+├── tenant/                # Multi-tenant workspace management
+│   └── index.ts           # create / settings / plugin status
+│
+├── permission/             # RBAC engine
+│   └── index.ts           # roles / permissions / require() guards
+│
+└── cli/                   # Plugin development CLI
+    └── create-plugin.ts   # npx create-aenews-plugin <name>
 ```
 
 ---
 
-## AI Architecture
+## Plugin Lifecycle
 
 ```
-User Query
-    │
-    ▼
-AI Orchestrator (MCP Gateway)
-    │
-    ├── Discover active plugins
-    ├── Load their tools, schemas, resources
-    ├── Route to appropriate LLM (GPT, Claude, Gemini, DeepSeek...)
-    │
-    ▼
-Plugin Tools (auto-discovered)
-    ├── CRM: findContact(), createDeal(), searchCompany()
-    ├── Finance: createInvoice(), getExpenses(), generateReport()
-    ├── HR: calculatePayroll(), checkLeave(), evaluatePerformance()
-    ├── Pharmacy: findExpiredMedicine(), checkStock()
-    └── ... any plugin can register tools
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│  Scan    │───▶│  Resolve │───▶│   Load   │───▶│ Install  │───▶│ Activate │
+│ plugins/ │    │  deps    │    │ manifest │    │ migrate  │    │ register │
+└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+                                                                      │
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐         │
+│  Remove  │◀───│Uninstall │◀───│Deactivate│◀───│  Error   │◀────────┘
+│          │    │ rollback │    │ unregister│    │  handle  │
+└──────────┘    └──────────┘    └──────────┘    └──────────┘
 ```
 
-The AI contains **zero business logic**. Each plugin exposes tools and schemas. The AI discovers and uses them dynamically.
+### What the Plugin Loader does:
+1. **Scan** the `plugins/` directory for valid `plugin.json` manifests
+2. **Resolve** dependency graph (topological sort, cycle detection)
+3. **Load** plugin server entries via dynamic `import()`
+4. **Install**: run migrations, create DB records, call `onInstall()`
+5. **Activate**: register tools, events, routes, menus, permissions for tenant
+6. **Deactivate**: unregister everything, call `onDeactivate()`
+7. **Uninstall**: run down migrations, delete data, call `onUninstall()`
+8. **Reload**: hot-reload for development (`dev` mode)
+
+---
+
+## Plugin Manifest
+
+Every plugin MUST have a `plugin.json`:
+
+```json
+{
+  "aenews": "1",
+  "id": "aenews-crm-contacts",
+  "name": "CRM Contacts",
+  "slug": "crm-contacts",
+  "version": "1.0.0",
+  "description": "Manage customer and lead contacts",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "0.1.0",
+
+  "dependencies": [
+    { "pluginId": "aenews-crm-core", "version": "^1.0.0", "optional": false }
+  ],
+
+  "capabilities": [
+    { "type": "object", "name": "contact", "description": "Contact entity" },
+    { "type": "view", "name": "contact-list", "description": "Contact list view" },
+    { "type": "tool", "name": "create_contact", "description": "AI tool" }
+  ],
+
+  "entry": {
+    "server": "./dist/server.js"
+  },
+
+  "permissions": [
+    { "id": "crm.contacts.read", "name": "Read Contacts", "category": "crm" },
+    { "id": "crm.contacts.write", "name": "Write Contacts", "category": "crm" }
+  ],
+
+  "settings": [
+    { "key": "default_view", "type": "select", "label": "Default View", "scope": "tenant", "options": [...] }
+  ],
+
+  "menus": [
+    { "id": "contacts", "label": "Contacts", "icon": "Users", "href": "/contacts", "section": "CRM", "order": 1 }
+  ],
+
+  "events": [
+    { "type": "contact.created", "payloadSchema": { "type": "object", "properties": { "id": { "type": "string" } } } }
+  ],
+
+  "migrations": [
+    { "version": "0.1.0", "name": "create_contacts_table", "up": "CREATE TABLE contacts (...)" }
+  ]
+}
+```
+
+---
+
+## Plugin SDK Usage
+
+Plugin developers use `definePlugin()` to build plugins:
+
+```typescript
+import { definePlugin } from '@aenews/plugin-sdk';
+import manifest from './plugin.json';
+
+export default definePlugin({
+  manifest,
+
+  onInstall: async (ctx) => {
+    ctx.logger.info('Installing contacts plugin...');
+  },
+
+  onActivate: async (ctx) => {
+    ctx.logger.info('Contacts plugin activated');
+  },
+
+  tools: {
+    create_contact: {
+      description: 'Create a new contact',
+      parameters: {
+        type: 'object',
+        properties: {
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+          email: { type: 'string' },
+        },
+        required: ['firstName', 'lastName'],
+      },
+      execute: async (params, ctx) => {
+        const contact = await ctx.db.contact.create({ data: params });
+        await ctx.eventBus.emit('contact.created', contact);
+        return contact;
+      },
+    },
+  },
+
+  events: {
+    'contact.created': {
+      handler: async (payload, ctx) => {
+        await ctx.eventBus.emit('notification.send', {
+          message: `New contact: ${payload.firstName}`,
+        });
+      },
+    },
+  },
+});
+```
+
+---
+
+## CLI: Create a Plugin
+
+```bash
+# Generate a complete plugin scaffold
+npx create-aenews-plugin hospital
+
+# With options
+npx create-aenews-plugin inventory --category ops --author "Acme Inc"
+npx create-aenews-plugin support-bot --description "AI support chatbot" --output ./my-plugins
+```
+
+This generates:
+```
+hospital/
+├── plugin.json        # Full manifest (capabilities, permissions, events, routes, menus)
+├── package.json       # NPM package config
+├── tsconfig.json      # TypeScript config
+├── src/
+│   ├── server.ts      # Plugin entry point (definePlugin with lifecycle + tools)
+│   └── types.ts       # TypeScript interfaces
+└── README.md           # Auto-generated documentation
+```
+
+---
+
+## MCP Gateway: AI ↔ Plugin
+
+The MCP Gateway enables AI to discover and use plugin tools dynamically:
+
+```
+User: "Create a new contact named John Doe"
+    │
+    ▼
+MCP Gateway
+    ├── getTools(tenantId)     → discovers all tools from active plugins
+    ├── buildSystemPrompt()    → generates prompt with tool descriptions
+    ├── call LLM               → AI decides to call "crm.contacts.create"
+    ├── executeTool()          → calls the plugin's handler
+    ├── feed result back       → AI generates final response
+    └── return to user         → "Contact John Doe created successfully"
+```
+
+The AI contains **zero** business logic. It discovers tools at runtime.
 
 ---
 
@@ -117,14 +273,43 @@ The AI contains **zero business logic**. Each plugin exposes tools and schemas. 
 All cross-plugin communication is event-driven:
 
 ```
-Event: PatientCreated
-  ├── CRM Plugin → creates Contact
-  ├── Billing Plugin → creates Account
+Event: contact.created
   ├── Notification Plugin → sends welcome email
+  ├── Billing Plugin → creates account
+  ├── Analytics Plugin → tracks metric
   └── AI Plugin → generates summary
 ```
 
-No direct coupling between plugins. Ever.
+Events are persisted to the database for replay and auditing.
+
+---
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/login` | POST | Login with email + password |
+| `/api/auth/register` | POST | Create workspace + user |
+| `/api/auth/logout` | POST | Invalidate session |
+| `/api/auth/me` | GET | Get current user |
+| `/api/tenants` | GET/POST | Tenant management |
+| `/api/plugins` | GET/POST | Plugin catalog + install |
+| `/api/plugins/[slug]` | GET/PATCH/DELETE | Plugin detail + update + remove |
+| `/api/chat` | GET/POST | AI chat with tool discovery |
+| `/api/notifications` | GET/POST | User notifications |
+| `/api/audit` | GET | Audit log |
+
+---
+
+## Reference Plugin: CRM Contacts
+
+The `plugins/crm-contacts/` directory contains the first reference plugin demonstrating:
+- Full `plugin.json` manifest with all sections
+- 3 AI tools (`create_contact`, `search_contacts`, `get_contact`)
+- 3 event handlers with cross-plugin emission
+- 5 REST API route handlers
+- Global search integration
+- Permission-scoped operations
 
 ---
 
@@ -133,46 +318,13 @@ No direct coupling between plugins. Ever.
 | Layer | Technology |
 |-------|-----------|
 | **Framework** | Next.js 16 (App Router) |
-| **Language** | TypeScript 5 |
-| **Styling** | Tailwind CSS 4 + shadcn/ui |
-| **State Management** | Zustand |
+| **Language** | TypeScript 5 (strict) |
+| **Styling** | Tailwind CSS 4 + shadcn/ui (New York) |
+| **State** | Zustand |
 | **Database** | Prisma ORM (SQLite dev / PostgreSQL prod) |
-| **UI Components** | shadcn/ui (New York) + Lucide Icons |
-| **Animations** | Framer Motion |
-| **Theme** | next-themes (Light/Dark/System) |
-| **Forms** | React Hook Form + Zod |
-| **AI SDK** | Vercel AI SDK (multi-provider) |
+| **AI** | z-ai-web-dev-sdk (multi-provider) |
 | **Icons** | Lucide React |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ or Bun
-- A package manager (bun recommended)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/AlterEgo095/AENEWS-CRM.git
-cd AENEWS-CRM
-
-# Install dependencies
-bun install
-
-# Set up database
-cp .env.example .env.local
-bun run db:push
-bun run db:generate
-
-# Start development server
-bun run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+| **Animations** | Framer Motion |
 
 ---
 
@@ -180,158 +332,131 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```
 src/
+├── core/                    # AENEWS Core Platform (plugin engine)
+│   ├── plugin-sdk/          # Manifest types + definePlugin() API
+│   ├── plugin-loader/       # Scan, resolve, load, lifecycle management
+│   ├── plugin-registry/     # Plugin catalog & marketplace
+│   ├── tool-registry/       # AI tool discovery & execution
+│   ├── event-store/         # Persistent event storage
+│   ├── mcp/                 # MCP Gateway (AI ↔ Plugin)
+│   ├── ai-gateway/          # AI provider abstraction
+│   ├── auth/                # Authentication & sessions
+│   ├── tenant/              # Multi-tenant workspaces
+│   ├── permission/          # RBAC engine
+│   └── cli/                 # create-aenews-plugin CLI
+│
 ├── app/
-│   ├── layout.tsx              # Root layout (ThemeProvider, Toaster)
-│   ├── page.tsx                # Main entry → PlatformLayout
-│   ├── globals.css             # Global styles + CSS variables
-│   └── api/
-│       ├── plugins/
-│       │   ├── route.ts        # GET catalog, POST install
-│       │   └── [slug]/route.ts # GET/PATCH/DELETE single plugin
-│       ├── notifications/route.ts
-│       ├── chat/route.ts       # AI chat endpoint
-│       └── audit/route.ts      # Audit log
+│   ├── layout.tsx           # Root layout
+│   ├── page.tsx             # Auth gate → Platform
+│   └── api/                 # REST API routes
 │
 ├── components/
-│   ├── layout/
-│   │   └── platform-layout.tsx  # Sidebar + Header + ViewSwitcher
-│   ├── ui/                     # shadcn/ui components
-│   └── views/
-│       ├── dashboard-view.tsx   # Dashboard with stats & activity
-│       ├── app-store-view.tsx   # Marketplace / App Store
-│       ├── chat-view.tsx        # AI Chat interface
-│       ├── settings-view.tsx    # Settings & organization
-│       ├── crm-view.tsx         # CRM module
-│       ├── finance-view.tsx     # Finance module
-│       ├── hr-view.tsx          # HR module
-│       ├── stock-view.tsx       # Inventory module
-│       ├── marketing-view.tsx   # Marketing module
-│       ├── support-view.tsx     # Support module
-│       ├── projects-view.tsx    # Projects module
-│       ├── ecommerce-view.tsx   # eCommerce module
-│       ├── workflows-view.tsx   # Workflows & automation
-│       └── notifications-view.tsx
+│   ├── layout/              # Platform sidebar + header
+│   ├── ui/                  # shadcn/ui components
+│   └── views/               # Module views (stubs)
 │
-├── lib/
-│   ├── db.ts                   # Prisma client
-│   ├── utils.ts                # Utility functions (cn)
-│   ├── plugin-registry.ts      # Core plugin system (111 plugins)
-│   ├── plugin-data.ts          # Frontend plugin catalog
-│   ├── event-bus.ts            # In-memory event bus
-│   └── seed.ts                 # Demo data seeder
+├── lib/                     # Shared utilities
+│   ├── db.ts                # Prisma client
+│   ├── plugin-registry.ts   # Static plugin catalog
+│   ├── plugin-data.ts       # Frontend catalog data
+│   ├── event-bus.ts         # In-memory pub/sub
+│   └── utils.ts
 │
-├── store/
-│   └── app-store.ts            # Zustand global state
+├── store/                   # Zustand stores
 │
 └── prisma/
-    └── schema.prisma            # Database schema (19 models)
+    └── schema.prisma         # 19 models, 7 enums
+
+plugins/
+└── crm-contacts/             # Reference plugin
+    ├── plugin.json
+    └── src/index.ts
 ```
-
----
-
-## Database Schema
-
-19 models covering the entire platform:
-
-| Model | Purpose |
-|-------|---------|
-| `Tenant` | Multi-tenant workspaces |
-| `User` | User accounts |
-| `Session` | Auth sessions |
-| `ApiKey` | API key management |
-| `Organization` | Org hierarchy (self-referencing) |
-| `Role` / `UserRole` | RBAC roles & assignments |
-| `Plugin` | Plugin registry / marketplace |
-| `InstalledPlugin` | Per-tenant plugin installations |
-| `CustomObject` | Dynamic entities (like Twenty) |
-| `Notification` | User notifications |
-| `AuditLog` | Activity & audit trail |
-| `File` | File storage metadata |
-| `ChatThread` / `ChatMessage` | AI chat conversations |
-| `Workflow` / `WorkflowRun` | Automation engine |
-| `Subscription` | Billing (Stripe) |
-| `EventLog` | Event bus persistence |
 
 ---
 
 ## Roadmap
 
-### Phase 1 — Core (Current)
+### ✅ Phase 1 — Core Foundation (Current)
 - [x] Database schema (19 models, 7 enums)
-- [x] Plugin Registry (111 plugins, 14 categories)
-- [x] Event Bus (in-memory pub/sub)
-- [x] Platform Layout (Sidebar, Header, Dark Mode)
-- [x] Dashboard with stats & activity feed
-- [x] App Store / Marketplace UI
-- [x] AI Chat interface
-- [x] Settings & Organization management
-- [x] Backend API routes (Plugins, Chat, Notifications, Audit)
-- [x] Demo data seeding
+- [x] Plugin Manifest specification (`plugin.json`)
+- [x] Plugin SDK (`definePlugin()` API)
+- [x] Plugin Loader (scan → resolve → load → install → activate)
+- [x] Tool Registry (AI tool discovery + MCP export)
+- [x] Event Store (persist / replay / query / aggregate)
+- [x] MCP Gateway (AI ↔ Plugin tool discovery)
+- [x] AI Gateway (multi-provider abstraction)
+- [x] Auth System (JWT sessions + API keys)
+- [x] Tenant Service (multi-tenant workspaces)
+- [x] RBAC Engine (roles / permissions / guards)
+- [x] CLI (`create-aenews-plugin`)
+- [x] Reference Plugin (CRM Contacts)
+- [x] API Routes (Auth, Tenants, Plugins, Chat, Notifications, Audit)
+- [x] Platform UI (Sidebar, Header, Dashboard, App Store)
 
-### Phase 2 — CRM Module
-- [ ] Contacts management (CRUD, views, filters)
-- [ ] Companies & organization tree
-- [ ] Deals pipeline (Kanban + table views)
-- [ ] Activities (calls, notes, tasks, calendar)
-- [ ] Email integration (IMAP sync)
-- [ ] Custom fields & views
-- [ ] Import/Export (CSV, Excel)
+### 🔲 Phase 2 — Core Hardening
+- [ ] View Engine (dynamic views from plugin manifests)
+- [ ] Custom Objects / Custom Fields engine
+- [ ] Search Engine (full-text across plugins)
+- [ ] Storage abstraction (local / S3 / GCS)
+- [ ] Plugin sandboxing / isolation
+- [ ] Plugin hot-reload (dev mode)
+- [ ] Plugin versioning & migration system
+- [ ] Settings engine (per-tenant plugin settings)
+- [ ] Automation / Workflow engine
+- [ ] Billing integration (Stripe)
 
-### Phase 3 — Automation & AI
-- [ ] Workflow builder (visual drag-and-drop)
-- [ ] MCP Gateway (AI ↔ Plugin tool discovery)
-- [ ] Multi-LLM support (GPT, Claude, Gemini, DeepSeek)
-- [ ] RAG integration (pgvector)
-- [ ] AI Agent builder
+### 🔲 Phase 3 — First Official Plugin (CRM)
+- [ ] CRM Core (Contacts, Companies, Deals)
+- [ ] CRM Pipeline (Kanban + table views)
+- [ ] CRM Activities (calls, notes, tasks, calendar)
+- [ ] CRM Email (IMAP sync, templates, sequences)
+- [ ] CRM Import/Export (CSV, Excel)
+- [ ] CRM Custom fields & views
 
-### Phase 4 — Vertical Modules
-- [ ] ERP (Finance, Stock, Procurement)
-- [ ] HR (Payroll, Leave, Recruitment)
-- [ ] Healthcare (Patients, Prescriptions)
-- [ ] Education (Students, Exams, Grades)
-- [ ] Real Estate (Properties, Rentals)
-- [ ] Marketplace for third-party plugins
-
-### Phase 5 — Platform
-- [ ] SDK & CLI (`create-aenews-app`)
-- [ ] Plugin versioning & updates
+### 🔲 Phase 4 — Ecosystem
+- [ ] Plugin Marketplace (public directory)
+- [ ] Plugin review & security scanning
 - [ ] Visual Form Builder
 - [ ] Visual Page Builder
 - [ ] Dashboard Builder
-- [ ] Widget Builder
-- [ ] White-label / Theme Engine
-- [ ] Mobile app (PWA → Native)
+- [ ] AI Agent Builder
 
 ---
 
-## Contributing
+## Getting Started
 
-AENEWS follows a plugin-first architecture. To contribute:
+```bash
+# Clone
+git clone https://github.com/AlterEgo095/AENEWS-CRM.git
+cd AENEWS-CRM
 
-1. Fork the repository
-2. Create a feature branch
-3. Follow the existing code patterns
-4. Submit a PR with a clear description
+# Install
+bun install
 
-See the [Architecture Guide](docs/architecture.md) for plugin development guidelines.
+# Database
+bun run db:push
+
+# Dev server
+bun run dev
+```
+
+### Create a plugin
+
+```bash
+npx create-aenews-plugin my-module
+cd plugins/my-module
+bun run dev
+```
 
 ---
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
-
----
-
-## Acknowledgments
-
-- [Twenty CRM](https://github.com/twentyhq/twenty) — Reference architecture for plugin system & custom objects
-- [shadcn/ui](https://ui.shadcn.com/) — UI component library
-- [Next.js](https://nextjs.org/) — React framework
-- [Prisma](https://prisma.io/) — Database ORM
+**AGPL-3.0** — This is a platform. Use it. Extend it. Contribute plugins back.
 
 ---
 
 <p align="center">
-  <strong>AENEWS Enterprise OS</strong> — Build any business. One platform.
+  <strong>AENEWS Enterprise OS</strong> — Build any business. One platform. Infinite plugins.
 </p>
