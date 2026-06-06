@@ -1,42 +1,23 @@
 // ============================================================
 // AENEWS Enterprise OS — Tool Registry
 // Central registry where plugins register AI-callable tools.
-// The AI/MCP Gateway queries this registry to discover available tools.
 // ============================================================
 
-import type { JSONSchema, ToolHandler, ToolContext, ToolResult } from '../plugin-sdk';
+import type { JSONSchema } from '../plugin-sdk';
 
 // ============================================================
 // Registered Tool
 // ============================================================
 
 export interface RegisteredTool {
-  /** The plugin that registered this tool */
   pluginId: string;
-  /** Fully qualified tool name (e.g. "crm.contacts.create") */
+  pluginSlug: string;
+  pluginName: string;
   name: string;
-  /** Human-readable description for AI discovery */
   description: string;
-  /** JSON Schema describing the tool's input parameters */
   parameters: JSONSchema;
-  /** The handler function that executes the tool */
-  handler: ToolHandler;
-  /** Permissions required to invoke this tool */
+  handler: (params: Record<string, unknown>, ctx: any) => Promise<unknown>;
   permissions?: string[];
-}
-
-// ============================================================
-// MCP Tool Definition — what the AI Gateway consumes
-// ============================================================
-
-export interface MCPToolDefinition {
-  name: string;
-  description: string;
-  inputSchema: JSONSchema;
-  annotations?: {
-    pluginId: string;
-    permissions?: string[];
-  };
 }
 
 // ============================================================
@@ -58,31 +39,86 @@ export interface ToolInvocationResult {
 export class ToolRegistry {
   private tools: Map<string, RegisteredTool> = new Map();
   private tenantActivePlugins: Map<string, Set<string>> = new Map();
+  private _initialized = false;
 
   /**
-   * Register a tool for a plugin. The fully qualified name is
-   * constructed as "pluginId:toolName" to avoid collisions.
+   * Initialize the registry (e.g., refresh tenant data from DB).
+   */
+  async initialize(): Promise<void> {
+    if (this._initialized) return;
+    // Refresh all known tenants from DB
+    try {
+      const { db } = await import('@/lib/db');
+      const tenants = await db.tenant.findMany({ where: { status: 'active' } });
+      for (const tenant of tenants) {
+        const activePlugins = await db.installedPlugin.findMany({
+          where: { tenantId: tenant.id, status: 'ACTIVE' },
+          include: { plugin: { select: { slug: true, name: true } } },
+        });
+        const set = new Set<string>();
+        for (const ip of activePlugins) {
+          if (ip.plugin) set.add(ip.plugin.id);
+        }
+        this.tenantActivePlugins.set(tenant.id, set);
+      }
+    } catch (error) {
+      console.warn('[ToolRegistry] Failed to initialize from DB:', error);
+    }
+    this._initialized = true;
+    console.log(`[ToolRegistry] Initialized with ${this.tools.size} tools`);
+  }
+
+  /**
+   * Refresh tenant active plugins from DB.
+   */
+  async refreshTenant(tenantId: string): Promise<void> {
+    try {
+      const { db } = await import('@/lib/db');
+      const activePlugins = await db.installedPlugin.findMany({
+        where: { tenantId, status: 'ACTIVE' },
+        include: { plugin: { select: { slug: true, name: true } } },
+      });
+      const set = new Set<string>();
+      for (const ip of activePlugins) {
+        if (ip.plugin) set.add(ip.plugin.id);
+      }
+      this.tenantActivePlugins.set(tenantId, set);
+    } catch (error) {
+      console.warn(`[ToolRegistry] Failed to refresh tenant ${tenantId}:`, error);
+    }
+  }
+
+  /**
+   * Register a tool for a plugin.
    */
   register(
     pluginId: string,
     name: string,
-    tool: Omit<RegisteredTool, 'pluginId' | 'name'>,
+    tool: {
+      description: string;
+      parameters: JSONSchema;
+      execute: (params: Record<string, unknown>, ctx: any) => Promise<unknown>;
+    },
   ): void {
     const qualifiedName = this.qualifyName(pluginId, name);
 
     if (this.tools.has(qualifiedName)) {
-      console.warn(
-        `[ToolRegistry] Tool "${qualifiedName}" is being overwritten by plugin "${pluginId}".`,
-      );
+      console.warn(`[ToolRegistry] Tool "${qualifiedName}" is being overwritten.`);
     }
+
+    // Get plugin metadata for pluginSlug/pluginName
+    const pluginSlug = pluginId.includes('.') ? pluginId.split('.').pop() || pluginId : pluginId;
+    const pluginName = pluginId.replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
     this.tools.set(qualifiedName, {
       pluginId,
+      pluginSlug,
+      pluginName,
       name: qualifiedName,
       description: tool.description,
       parameters: tool.parameters,
-      handler: tool.handler,
-      permissions: tool.permissions,
+      handler: tool.execute,
+      permissions: undefined,
     });
   }
 
@@ -94,7 +130,6 @@ export class ToolRegistry {
       const qualifiedName = this.qualifyName(pluginId, name);
       this.tools.delete(qualifiedName);
     } else {
-      // Remove all tools for this plugin
       for (const [key, tool] of this.tools) {
         if (tool.pluginId === pluginId) {
           this.tools.delete(key);
@@ -111,26 +146,6 @@ export class ToolRegistry {
   }
 
   /**
-   * Get a registered tool by plugin ID and tool name.
-   */
-  getByName(pluginId: string, name: string): RegisteredTool | undefined {
-    return this.tools.get(this.qualifyName(pluginId, name));
-  }
-
-  /**
-   * Get all tools registered by a specific plugin.
-   */
-  getByPlugin(pluginId: string): RegisteredTool[] {
-    const result: RegisteredTool[] = [];
-    for (const tool of this.tools.values()) {
-      if (tool.pluginId === pluginId) {
-        result.push(tool);
-      }
-    }
-    return result;
-  }
-
-  /**
    * Get all registered tools.
    */
   getAll(): RegisteredTool[] {
@@ -139,7 +154,6 @@ export class ToolRegistry {
 
   /**
    * Get tools available for a specific tenant.
-   * Only returns tools from plugins that are active for that tenant.
    */
   getForTenant(tenantId: string): RegisteredTool[] {
     const activePlugins = this.tenantActivePlugins.get(tenantId);
@@ -157,7 +171,7 @@ export class ToolRegistry {
   }
 
   /**
-   * Mark a plugin as active for a tenant (makes its tools available).
+   * Mark a plugin as active for a tenant.
    */
   activatePluginForTenant(pluginId: string, tenantId: string): void {
     if (!this.tenantActivePlugins.has(tenantId)) {
@@ -167,7 +181,7 @@ export class ToolRegistry {
   }
 
   /**
-   * Mark a plugin as inactive for a tenant (hides its tools).
+   * Mark a plugin as inactive for a tenant.
    */
   deactivatePluginForTenant(pluginId: string, tenantId: string): void {
     const activePlugins = this.tenantActivePlugins.get(tenantId);
@@ -180,7 +194,7 @@ export class ToolRegistry {
   }
 
   /**
-   * Remove all tenant mappings for a plugin (e.g., on uninstall).
+   * Remove all tenant mappings for a plugin.
    */
   removePluginFromAllTenants(pluginId: string): void {
     for (const [tenantId, plugins] of this.tenantActivePlugins) {
@@ -188,94 +202,6 @@ export class ToolRegistry {
       if (plugins.size === 0) {
         this.tenantActivePlugins.delete(tenantId);
       }
-    }
-  }
-
-  /**
-   * Export all registered tools as MCP-compatible tool definitions.
-   * This is what the AI Gateway uses to discover available tools.
-   */
-  toMCPTools(): MCPToolDefinition[] {
-    return this.getAll().map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.parameters,
-      annotations: {
-        pluginId: tool.pluginId,
-        ...(tool.permissions && tool.permissions.length > 0
-          ? { permissions: tool.permissions }
-          : {}),
-      },
-    }));
-  }
-
-  /**
-   * Export MCP tools for a specific tenant only.
-   */
-  toMCPTenantTools(tenantId: string): MCPToolDefinition[] {
-    return this.getForTenant(tenantId).map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.parameters,
-      annotations: {
-        pluginId: tool.pluginId,
-        ...(tool.permissions && tool.permissions.length > 0
-          ? { permissions: tool.permissions }
-          : {}),
-      },
-    }));
-  }
-
-  /**
-   * Invoke a tool by name with the given parameters and context.
-   * Returns the result with timing information.
-   */
-  async invoke(
-    name: string,
-    params: Record<string, unknown>,
-    context: ToolContext,
-  ): Promise<ToolInvocationResult> {
-    const tool = this.tools.get(name);
-    if (!tool) {
-      return {
-        toolName: name,
-        success: false,
-        error: `Tool "${name}" not found in registry`,
-        durationMs: 0,
-      };
-    }
-
-    // Check permissions if defined
-    if (tool.permissions && tool.permissions.length > 0 && context.userId) {
-      // In a real implementation, this would check against the user's permissions
-      // For now, we just log the permission check
-      console.log(
-        `[ToolRegistry] Permission check for "${name}" by user "${context.userId}": ${tool.permissions.join(', ')}`,
-      );
-    }
-
-    const start = performance.now();
-    try {
-      const result: ToolResult = await tool.handler(params, context);
-      const durationMs = Math.round(performance.now() - start);
-
-      return {
-        toolName: name,
-        success: result.success,
-        data: result.data,
-        error: result.error,
-        durationMs,
-      };
-    } catch (error) {
-      const durationMs = Math.round(performance.now() - start);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-
-      return {
-        toolName: name,
-        success: false,
-        error: errorMessage,
-        durationMs,
-      };
     }
   }
 
@@ -294,7 +220,7 @@ export class ToolRegistry {
   }
 
   /**
-   * Check if a tool exists in the registry.
+   * Check if a tool exists.
    */
   has(name: string): boolean {
     return this.tools.has(name);
@@ -309,13 +235,25 @@ export class ToolRegistry {
   }
 
   /**
-   * Construct a fully qualified tool name: pluginId:toolName
+   * Construct a fully qualified tool name.
    */
   private qualifyName(pluginId: string, name: string): string {
-    // If name already contains a colon, it's already qualified
     if (name.includes(':')) {
       return name;
     }
     return `${pluginId}:${name}`;
   }
+}
+
+// ============================================================
+// Singleton
+// ============================================================
+
+let _instance: ToolRegistry | undefined;
+
+export function getToolRegistry(): ToolRegistry {
+  if (!_instance) {
+    _instance = new ToolRegistry();
+  }
+  return _instance;
 }

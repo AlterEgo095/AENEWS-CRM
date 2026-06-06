@@ -4,7 +4,6 @@
 // ============================================================
 
 import { db } from '@/lib/db';
-import { getPluginCatalog, registryCategoryToPrisma } from '@/lib/plugin-registry';
 
 export async function seedDemoData() {
   console.log('🌱 [Seed] Starting AENEWS demo data seeding...');
@@ -424,46 +423,39 @@ export async function seedDemoData() {
   }
 
   // ── 8. Install CRM, Finance, HR plugins as "active" ─────────
-  const pluginsToInstall = [
-    'crm-contacts',
-    'crm-companies',
-    'crm-deals',
-    'crm-pipeline',
-    'finance-invoicing',
-    'finance-expenses',
-    'finance-budget',
-    'hr-employees',
-    'hr-payroll',
-    'hr-leave',
+  // ── 8. Install CRM Contacts plugin as active (only plugin with actual manifest) ─────────
+  const demoPlugins = [
+    {
+      id: 'aenews-crm-contacts',
+      name: 'CRM Contacts',
+      slug: 'crm-contacts',
+      description: 'Full-featured contact management for CRM.',
+      version: '1.0.0',
+      author: 'AENEWS',
+      category: 'CUSTOM',
+    },
   ];
 
-  const catalog = getPluginCatalog();
-
-  for (const pluginSlug of pluginsToInstall) {
-    const catalogPlugin = catalog.find((p) => p.slug === pluginSlug);
-    if (!catalogPlugin) continue;
-
-    // Ensure plugin exists in DB
+  for (const pluginInfo of demoPlugins) {
     const dbPlugin = await db.plugin.upsert({
-      where: { slug: pluginSlug },
+      where: { slug: pluginInfo.slug },
       update: {
         status: 'ACTIVE',
       },
       create: {
-        id: catalogPlugin.id,
-        name: catalogPlugin.name,
-        slug: catalogPlugin.slug,
-        description: catalogPlugin.description,
-        version: catalogPlugin.version,
-        author: catalogPlugin.author,
-        category: registryCategoryToPrisma(catalogPlugin.category) as any,
+        id: pluginInfo.id,
+        name: pluginInfo.name,
+        slug: pluginInfo.slug,
+ description: pluginInfo.description,
+        version: pluginInfo.version,
+        author: pluginInfo.author,
+        category: pluginInfo.category,
         status: 'ACTIVE',
-        capabilities: JSON.stringify(catalogPlugin.capabilities),
+        capabilities: '[]',
         settings: '{}',
       },
     });
 
-    // Install the plugin for the tenant
     const existingInstall = await db.installedPlugin.findUnique({
       where: {
         tenantId_pluginId: { tenantId: tenant.id, pluginId: dbPlugin.id },
@@ -475,14 +467,13 @@ export async function seedDemoData() {
         data: {
           tenantId: tenant.id,
           pluginId: dbPlugin.id,
-          version: catalogPlugin.version,
+          version: pluginInfo.version,
           status: 'ACTIVE',
           settings: '{}',
         },
       });
       results.plugins++;
     } else {
-      // Ensure it's marked active
       await db.installedPlugin.update({
         where: { id: existingInstall.id },
         data: { status: 'ACTIVE' },

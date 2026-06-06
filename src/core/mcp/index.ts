@@ -150,7 +150,6 @@ export class MCPGateway {
 
     const executionContext = {
       pluginId: tool.pluginId,
-      pluginSlug: tool.pluginSlug,
       tenantId: context.tenantId,
       userId: context.userId,
     };
@@ -215,7 +214,7 @@ export class MCPGateway {
     for (const tool of tools) {
       const reg = this.toolRegistry.get(tool.function.name);
       if (!reg) continue;
-      const key = reg.pluginName;
+      const key = reg.pluginName || reg.pluginId;
       if (!toolsByPlugin.has(key)) toolsByPlugin.set(key, []);
       toolsByPlugin.get(key)!.push(tool);
     }

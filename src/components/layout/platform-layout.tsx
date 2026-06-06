@@ -1,30 +1,16 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   LayoutDashboard,
-  Search,
-  Users,
-  DollarSign,
-  UserCog,
-  Package,
-  Megaphone,
-  Headphones,
-  FolderKanban,
-  ShoppingCart,
-  Sparkles,
+  Puzzle,
   Store,
-  Workflow,
-  Bell,
   Settings,
-  Building2,
-  UsersRound,
-  CreditCard,
-  ChevronDown,
   Moon,
   Sun,
   LogOut,
   User,
+  ChevronDown,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -73,86 +59,49 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-
 import DashboardView from '@/components/views/dashboard-view';
+import PluginsView from '@/components/views/plugins-view';
 import AppStoreView from '@/components/views/app-store-view';
-import ChatView from '@/components/views/chat-view';
 import SettingsView from '@/components/views/settings-view';
-import CrmView from '@/components/views/crm-view';
-import FinanceView from '@/components/views/finance-view';
-import HrView from '@/components/views/hr-view';
-import StockView from '@/components/views/stock-view';
-import MarketingView from '@/components/views/marketing-view';
-import SupportView from '@/components/views/support-view';
-import ProjectsView from '@/components/views/projects-view';
-import EcommerceView from '@/components/views/ecommerce-view';
-import WorkflowsView from '@/components/views/workflows-view';
-import NotificationsView from '@/components/views/notifications-view';
+
+// ============================================================
+// Nav Configuration
+// ============================================================
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
-  section?: string;
 }
 
 interface NavSection {
   id: string;
   label: string;
   items: NavItem[];
-  collapsible?: boolean;
 }
 
 const navSections: NavSection[] = [
   {
-    id: 'overview',
-    label: 'Overview',
+    id: 'core',
+    label: 'Core',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { id: 'command-palette', label: 'Command Palette', icon: Search },
-    ],
-  },
-  {
-    id: 'apps',
-    label: 'Apps',
-    collapsible: true,
-    items: [
-      { id: 'crm', label: 'CRM', icon: Users },
-      { id: 'finance', label: 'Finance', icon: DollarSign },
-      { id: 'hr', label: 'HR', icon: UserCog },
-      { id: 'stock', label: 'Stock', icon: Package },
-      { id: 'marketing', label: 'Marketing', icon: Megaphone },
-      { id: 'support', label: 'Support', icon: Headphones },
-      { id: 'projects', label: 'Projects', icon: FolderKanban },
-      { id: 'ecommerce', label: 'eCommerce', icon: ShoppingCart },
-    ],
-  },
-  {
-    id: 'platform',
-    label: 'Platform',
-    items: [
-      { id: 'ai-chat', label: 'AI Chat', icon: Sparkles },
+      { id: 'plugins', label: 'Plugins', icon: Puzzle },
       { id: 'app-store', label: 'App Store', icon: Store },
-      { id: 'workflows', label: 'Workflows', icon: Workflow },
-      { id: 'notifications', label: 'Notifications', icon: Bell },
     ],
   },
   {
-    id: 'settings',
-    label: 'Settings',
+    id: 'system',
+    label: 'System',
     items: [
       { id: 'settings', label: 'Settings', icon: Settings },
-      { id: 'organization', label: 'Organization', icon: Building2 },
-      { id: 'members', label: 'Members', icon: UsersRound },
-      { id: 'billing', label: 'Billing', icon: CreditCard },
     ],
   },
 ];
+
+// ============================================================
+// Sidebar
+// ============================================================
 
 function AppSidebar() {
   const { currentView, setCurrentView } = useAppStore();
@@ -164,7 +113,7 @@ function AppSidebar() {
   const displayName = user
     ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
     : 'Admin User';
-  const roleLabel = user?.roles?.[0] || 'Member';
+  const roleLabel = user?.roles?.[0] || 'Admin';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -173,65 +122,39 @@ function AppSidebar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-sm">
             A
           </div>
-          <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden">
-            AENEWS
-          </span>
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <span className="text-lg font-bold tracking-tight leading-tight">
+              AENEWS
+            </span>
+            <span className="text-[10px] text-muted-foreground leading-tight">
+              Enterprise OS
+            </span>
+          </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         {navSections.map((section) => (
           <React.Fragment key={section.id}>
-            {section.collapsible ? (
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger className="flex w-full items-center">
-                      {section.label}
-                      <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                    </CollapsibleTrigger>
-                  </SidebarGroupLabel>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {section.items.map((item) => (
-                          <SidebarMenuItem key={item.id}>
-                            <SidebarMenuButton
-                              isActive={currentView === item.id}
-                              tooltip={item.label}
-                              onClick={() => setCurrentView(item.id)}
-                            >
-                              <item.icon className="size-4" />
-                              <span>{item.label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
-            ) : (
-              <SidebarGroup>
-                <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {section.items.map((item) => (
-                      <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton
-                          isActive={currentView === item.id}
-                          tooltip={item.label}
-                          onClick={() => setCurrentView(item.id)}
-                        >
-                          <item.icon className="size-4" />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
+            <SidebarGroup>
+              <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        isActive={currentView === item.id}
+                        tooltip={item.label}
+                        onClick={() => setCurrentView(item.id)}
+                      >
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
             <SidebarSeparator />
           </React.Fragment>
         ))}
@@ -262,6 +185,10 @@ function AppSidebar() {
     </Sidebar>
   );
 }
+
+// ============================================================
+// Header
+// ============================================================
 
 function Header() {
   const { currentView, setCurrentView } = useAppStore();
@@ -326,44 +253,11 @@ function Header() {
       </Breadcrumb>
 
       <div className="flex items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setCurrentView('ai-chat')}
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>AI Chat</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 relative"
-              onClick={() => setCurrentView('notifications')}
-            >
-              <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white border-0">
-                3
-              </Badge>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Notifications</TooltipContent>
-        </Tooltip>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-9 w-9">
               {theme === 'dark' ? (
                 <Moon className="h-4 w-4" />
-              ) : theme === 'light' ? (
-                <Sun className="h-4 w-4" />
               ) : (
                 <Sun className="h-4 w-4" />
               )}
@@ -379,7 +273,7 @@ function Header() {
               Dark
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setTheme('system')}>
-              <Moon className="mr-2 h-4 w-4" />
+              <Sun className="mr-2 h-4 w-4" />
               System
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -412,11 +306,7 @@ function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setCurrentView('settings')}>
               <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setCurrentView('settings')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Profile & Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => logout()}>
@@ -430,27 +320,18 @@ function Header() {
   );
 }
 
+// ============================================================
+// View Switcher
+// ============================================================
+
 function ViewSwitcher() {
   const { currentView } = useAppStore();
 
   const viewMap: Record<string, React.ReactNode> = {
     dashboard: <DashboardView />,
+    plugins: <PluginsView />,
     'app-store': <AppStoreView />,
-    'ai-chat': <ChatView />,
     settings: <SettingsView />,
-    organization: <SettingsView />,
-    members: <SettingsView />,
-    billing: <SettingsView />,
-    crm: <CrmView />,
-    finance: <FinanceView />,
-    hr: <HrView />,
-    stock: <StockView />,
-    marketing: <MarketingView />,
-    support: <SupportView />,
-    projects: <ProjectsView />,
-    ecommerce: <EcommerceView />,
-    workflows: <WorkflowsView />,
-    notifications: <NotificationsView />,
   };
 
   return (
@@ -459,6 +340,10 @@ function ViewSwitcher() {
     </div>
   );
 }
+
+// ============================================================
+// Platform Layout (default export)
+// ============================================================
 
 export default function PlatformLayout() {
   return (

@@ -1,400 +1,382 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useCallback } from 'react';
 import {
-  Users,
-  DollarSign,
-  TrendingUp,
-  CheckCircle2,
-  UserPlus,
-  PlusCircle,
-  Send,
-  BarChart3,
-  Sparkles,
+  Activity,
+  Puzzle,
+  Wrench,
+  Zap,
   ArrowUpRight,
   ArrowDownRight,
-  CalendarDays,
-  FileText,
-  MessageSquare,
-  CreditCard,
+  CheckCircle2,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useAppStore } from '@/store/app-store';
+import { useAuthStore } from '@/store/auth-store';
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.05, duration: 0.4, ease: 'easeOut' },
-  }),
-};
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const statsCards = [
-  {
-    title: 'Active Users',
-    value: '2,847',
-    change: '+12.5%',
-    trend: 'up' as const,
-    period: 'from last month',
-    icon: Users,
-    color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
-    sparkline: [20, 35, 28, 45, 42, 55, 60, 58, 72, 68, 80, 85],
-  },
-  {
-    title: 'Revenue',
-    value: '$48,290',
-    change: '+8.2%',
-    trend: 'up' as const,
-    period: 'from last month',
-    icon: DollarSign,
-    color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
-    sparkline: [30, 32, 28, 38, 42, 40, 48, 52, 50, 55, 58, 62],
-  },
-  {
-    title: 'Active Deals',
-    value: '156',
-    change: '+23',
-    trend: 'up' as const,
-    period: 'new this week',
-    icon: TrendingUp,
-    color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
-    sparkline: [12, 15, 18, 14, 22, 25, 20, 28, 30, 26, 32, 35],
-  },
-  {
-    title: 'Tasks Completed',
-    value: '89/112',
-    change: '79%',
-    trend: 'up' as const,
-    period: 'completion rate',
-    icon: CheckCircle2,
-    color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
-    sparkline: [40, 48, 55, 52, 60, 65, 68, 72, 75, 78, 82, 89],
-  },
-];
-
-const recentActivity = [
-  {
-    id: 1,
-    title: 'New deal created: "Enterprise License Agreement"',
-    description: 'by Sarah Chen — Value: $120,000',
-    time: '5 min ago',
-    icon: FileText,
-    iconColor: 'text-emerald-600',
-  },
-  {
-    id: 2,
-    title: 'Payment received from Acme Corp',
-    description: 'Invoice #INV-2024-0892 — $24,500',
-    time: '18 min ago',
-    icon: CreditCard,
-    iconColor: 'text-emerald-600',
-  },
-  {
-    id: 3,
-    title: 'New support ticket: "Integration Issue"',
-    description: 'Assigned to John Davis — Priority: High',
-    time: '32 min ago',
-    icon: MessageSquare,
-    iconColor: 'text-amber-500',
-  },
-  {
-    id: 4,
-    title: 'Marketing campaign "Summer Launch" started',
-    description: 'Target audience: 15,000 contacts',
-    time: '1 hour ago',
-    icon: Sparkles,
-    iconColor: 'text-purple-500',
-  },
-  {
-    id: 5,
-    title: 'New team member joined: Emily Rodriguez',
-    description: 'Role: Marketing Manager',
-    time: '2 hours ago',
-    icon: UserPlus,
-    iconColor: 'text-emerald-600',
-  },
-  {
-    id: 6,
-    title: 'Inventory alert: Low stock on Product SKU-4521',
-    description: 'Current stock: 12 units — Reorder point: 50',
-    time: '3 hours ago',
-    icon: TrendingUp,
-    iconColor: 'text-red-500',
-  },
-];
-
-const quickActions = [
-  { label: 'New Contact', icon: UserPlus, view: 'crm' },
-  { label: 'New Deal', icon: PlusCircle, view: 'crm' },
-  { label: 'Create Task', icon: CheckCircle2, view: 'dashboard' },
-  { label: 'Send Email', icon: Send, view: 'crm' },
-  { label: 'View Reports', icon: BarChart3, view: 'dashboard' },
-  { label: 'AI Chat', icon: Sparkles, view: 'ai-chat' },
-];
-
-const activePlugins = [
-  { name: 'CRM Contacts', icon: '👤', status: 'Active' },
-  { name: 'Finance', icon: '💰', status: 'Active' },
-  { name: 'Inventory', icon: '📦', status: 'Active' },
-  { name: 'Kanban', icon: '📋', status: 'Active' },
-  { name: 'Live Chat', icon: '💬', status: 'Active' },
-  { name: 'Campaigns', icon: '📣', status: 'Active' },
-  { name: 'Calendar', icon: '📅', status: 'Active' },
-  { name: 'Tasks', icon: '✅', status: 'Active' },
-];
-
-function MiniSparkline({ data }: { data: number[] }) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const height = 32;
-  const width = 80;
-
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * width;
-      const y = height - ((v - min) / range) * height;
-      return `${x},${y}`;
-    })
-    .join(' ');
-
-  return (
-    <svg width={width} height={height} className="overflow-visible">
-      <polyline
-        points={points}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="text-emerald-500"
-      />
-    </svg>
-  );
-}
+// ============================================================
+// Dashboard View
+// ============================================================
 
 export default function DashboardView() {
-  const { setCurrentView } = useAppStore();
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const {
+    systemStats,
+    setSystemStats,
+    systemLoading,
+    setSystemLoading,
+    recentEvents,
+    setRecentEvents,
+    eventsLoading,
+    setEventsLoading,
+    plugins,
+    setPlugins,
+    pluginsLoading,
+    setPluginsLoading,
+  } = useAppStore();
+  const { user } = useAuthStore();
+  const token = useAuthStore.getState().token;
+
+  const fetchSystemStats = useCallback(async () => {
+    setSystemLoading(true);
+    try {
+      const res = await fetch('/api/system');
+      if (res.ok) {
+        const data = await res.json();
+        setSystemStats(data);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setSystemLoading(false);
+    }
+  }, [setSystemStats, setSystemLoading]);
+
+  const fetchEvents = useCallback(async () => {
+    setEventsLoading(true);
+    try {
+      const res = await fetch(`/api/events?limit=10`);
+      if (res.ok) {
+        const data = await res.json();
+        setRecentEvents(data.events);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setEventsLoading(false);
+    }
+  }, [setRecentEvents, setEventsLoading]);
+
+  const fetchPlugins = useCallback(async () => {
+    if (!user?.tenantId) return;
+    setPluginsLoading(true);
+    try {
+      const res = await fetch(`/api/plugins?tenantId=${user.tenantId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPlugins(data.plugins);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setPluginsLoading(false);
+    }
+  }, [user?.tenantId, setPlugins, setPluginsLoading]);
+
+  useEffect(() => {
+    fetchSystemStats();
+    fetchEvents();
+    fetchPlugins();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchSystemStats();
+      fetchEvents();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchSystemStats, fetchEvents, fetchPlugins]);
+
+  const activePlugins = plugins.filter((p) => p.status === 'ACTIVE');
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="border-emerald-200 dark:border-emerald-900 bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-950/30 dark:to-card">
-          <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                Welcome back, Admin
-              </h1>
-              <p className="text-muted-foreground mt-1">{today}</p>
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            System overview and monitoring for your AENEWS workspace.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {systemStats && (
+            <div className="flex items-center gap-1.5 text-sm">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                {systemStats.status}
+              </span>
             </div>
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-              <CalendarDays className="mr-1 h-3 w-3" />
-              All systems operational
-            </Badge>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsCards.map((stat, i) => (
-          <motion.div
-            key={stat.title}
-            custom={i}
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-          >
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <div className="flex items-center gap-1 text-xs">
-                      {stat.trend === 'up' ? (
-                        <ArrowUpRight className="h-3 w-3 text-emerald-600" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3 text-red-500" />
-                      )}
-                      <span
-                        className={
-                          stat.trend === 'up'
-                            ? 'text-emerald-600 font-medium'
-                            : 'text-red-500 font-medium'
-                        }
-                      >
-                        {stat.change}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {stat.period}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className={`rounded-lg p-2 ${stat.color}`}>
-                      <stat.icon className="h-4 w-4" />
-                    </div>
-                    <MiniSparkline data={stat.sparkline} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+          )}
+        </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="lg:col-span-2"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Activity</CardTitle>
-              <CardDescription>Latest updates across your platform</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {recentActivity.map((activity, i) => (
-                  <motion.div
-                    key={activity.id}
-                    custom={i}
-                    initial="hidden"
-                    animate="visible"
-                    variants={fadeUp}
-                    className="flex items-start gap-4 px-6 py-4 hover:bg-muted/50 transition-colors"
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Plugins"
+          icon={Puzzle}
+          value={systemStats ? String(systemStats.stats.plugins.total) : undefined}
+          description="Scanned from plugins directory"
+          loading={systemLoading}
+        />
+        <StatCard
+          title="Active Plugins"
+          icon={Zap}
+          value={systemStats ? String(systemStats.stats.plugins.active) : undefined}
+          description="Currently running"
+          loading={systemLoading}
+          accent
+        />
+        <StatCard
+          title="Registered Tools"
+          icon={Wrench}
+          value={systemStats ? String(systemStats.stats.tools.registered) : undefined}
+          description="AI-callable tools"
+          loading={systemLoading}
+        />
+        <StatCard
+          title="Total Events"
+          icon={Activity}
+          value={systemStats ? String(systemStats.stats.events) : undefined}
+          description="System event log"
+          loading={systemLoading}
+        />
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Active Plugins */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold">Active Plugins</CardTitle>
+            <CardDescription>
+              Currently active plugins in your workspace
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pluginsLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-9 w-9 rounded-lg" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activePlugins.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Puzzle className="h-10 w-10 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No active plugins. Install and activate plugins from the App Store.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {activePlugins.map((plugin) => (
+                  <div
+                    key={plugin.id}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <div
-                      className={`mt-0.5 rounded-full p-2 bg-muted ${activity.iconColor}`}
-                    >
-                      <activity.icon className="h-4 w-4" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                      <Puzzle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{plugin.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        v{plugin.version} · {plugin.author}
+                      </p>
+                    </div>
+                    <Badge variant="default" className="bg-emerald-600 text-white text-[10px] px-1.5 py-0">
+                      Active
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Events */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold">Recent Events</CardTitle>
+            <CardDescription>
+              Latest system events and activity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recentEvents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Activity className="h-10 w-10 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No events recorded yet.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {recentEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
+                      <Activity className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {activity.title}
+                        {formatEventType(event.eventType)}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {activity.description}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {formatTimeAgo(event.createdAt)}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {activity.time}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-              <CardDescription>Common actions at your fingertips</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {quickActions.map((action) => (
-                  <Button
-                    key={action.label}
-                    variant="outline"
-                    className="h-auto py-3 px-3 flex flex-col items-center gap-2 hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                    onClick={() => setCurrentView(action.view)}
-                  >
-                    <action.icon className="h-5 w-5 text-emerald-600" />
-                    <span className="text-xs font-medium">{action.label}</span>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Active Plugins */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.4 }}
-      >
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Active Plugins</CardTitle>
-                <CardDescription>
-                  Currently running modules in your workspace
-                </CardDescription>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentView('app-store')}
-              >
-                Browse All
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="w-full">
-              <div className="flex gap-4 px-6 pb-6 pt-2">
-                {activePlugins.map((plugin) => (
-                  <Card
-                    key={plugin.name}
-                    className="min-w-[140px] flex-shrink-0 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => setCurrentView('app-store')}
-                  >
-                    <CardContent className="p-4 flex flex-col items-center gap-2">
-                      <span className="text-2xl">{plugin.icon}</span>
-                      <span className="text-sm font-medium text-center">
-                        {plugin.name}
-                      </span>
-                      <Badge
-                        variant="secondary"
-                        className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 text-[10px]"
-                      >
-                        {plugin.status}
+                    {event.sourcePlugin && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                        {event.sourcePlugin}
                       </Badge>
-                    </CardContent>
-                  </Card>
+                    )}
+                  </div>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            )}
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
+
+      {/* System Info */}
+      {systemStats && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold">System Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">AENEWS Version</p>
+                <p className="font-medium">{systemStats.version}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">SDK Version</p>
+                <p className="font-medium">{systemStats.sdkVersion}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Tenants</p>
+                <p className="font-medium">{systemStats.stats.tenants}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Users</p>
+                <p className="font-medium">{systemStats.stats.users}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
+}
+
+// ============================================================
+// Helper Components
+// ============================================================
+
+function StatCard({
+  title,
+  icon: Icon,
+  value,
+  description,
+  loading,
+  accent,
+}: {
+  title: string;
+  icon: React.ElementType;
+  value?: string;
+  description: string;
+  loading?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">{title}</p>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <p className="text-2xl font-bold tracking-tight">{value ?? '—'}</p>
+            )}
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+              accent
+                ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                : 'bg-muted'
+            }`}
+          >
+            <Icon
+              className={`h-5 w-5 ${
+                accent
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-muted-foreground'
+              }`}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function formatEventType(type: string): string {
+  return type
+    .replace(/\./g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/Plugin/gi, '')
+    .trim();
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
