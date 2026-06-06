@@ -24,7 +24,7 @@ export const EVENT_TYPES = {
 
 type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES] | string;
 
-class EventBus {
+export class EventBus {
   private handlers: Map<string, Set<EventHandler>> = new Map();
 
   /**

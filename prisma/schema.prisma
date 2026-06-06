@@ -115,6 +115,7 @@ model Tenant {
   subscriptions   Subscription[]
   eventLogs       EventLog[]
   apiKeys         ApiKey[]
+  builderComponents BuilderComponent[]
 }
 
 // ============================================================
@@ -535,4 +536,28 @@ model EventLog {
   @@index([eventType])
   @@index([sourcePlugin])
   @@index([createdAt])
+}
+
+// ============================================================
+// 14. BUILDER COMPONENTS (Forms, Pages, Widgets, Dashboards, etc.)
+// ============================================================
+
+model BuilderComponent {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // "form" | "page" | "widget" | "dashboard" | "report" | "table" | "agent" | "automation"
+  name        String
+  description String?
+  /// JSON string containing the full component configuration (schema, layout, etc.)
+  config      String   @default("{}")
+  /// Nullable — links to a plugin that provides this component
+  pluginId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([pluginId])
 }
