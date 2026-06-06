@@ -51,3 +51,11 @@ dev*.log
 .zscripts/
 scripts/run-seed.ts
 download/
+
+# sandbox / non-project files
+skills/
+examples/
+worklog.md
+
+# lock files (bun generates bun.lock)
+bun.lock
