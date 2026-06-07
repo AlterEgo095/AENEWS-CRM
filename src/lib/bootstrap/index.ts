@@ -19,6 +19,10 @@ import { getAgentRegistry } from '@/core/agent-registry';
 import { getKnowledgeRegistry } from '@/core/knowledge-registry';
 import { getSchemaRegistry } from '@/core/schema-registry';
 import { eventBus, EVENT_TYPES } from '@/lib/event-bus';
+import { db } from '@/lib/db';
+
+// Default tenant used until multi-tenant auth is wired
+const DEFAULT_TENANT_ID = 'default';
 
 // ============================================================
 // Bootstrap State
@@ -80,10 +84,29 @@ export async function bootstrapPlatform(): Promise<void> {
       },
       required: ['firstName', 'lastName'],
     },
-    execute: async (params) => {
-      const id = `contact_${Date.now()}`;
-      await eventBus.emit('contact.created', { id, ...params });
-      return { success: true, contactId: id, ...params };
+    execute: async (params: Record<string, unknown>) => {
+      const contact = await db.crmContact.create({
+        data: {
+          tenantId: DEFAULT_TENANT_ID,
+          firstName: String(params.firstName || ''),
+          lastName: String(params.lastName || ''),
+          email: params.email ? String(params.email) : null,
+          phone: params.phone ? String(params.phone) : null,
+          company: params.company ? String(params.company) : null,
+          title: params.title ? String(params.title) : null,
+          tags: '[]',
+          metadata: '{}',
+        },
+      });
+      await eventBus.emit('contact.created', {
+        id: contact.id,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email,
+        company: contact.company,
+        source: contact.source,
+      });
+      return { success: true, contactId: contact.id, ...params };
     },
     permissions: ['crm.contacts.write'],
     rateLimit: { maxRequests: 100, windowMs: 60000 },
@@ -100,8 +123,30 @@ export async function bootstrapPlatform(): Promise<void> {
       },
       required: ['query'],
     },
-    execute: async (params) => {
-      return { success: true, query: params.query, contacts: [], total: 0 };
+    execute: async (params: Record<string, unknown>) => {
+      const q = String(params.query || '');
+      const limit = Math.min(Math.max(Number(params.limit) || 20, 1), 100);
+      const where: Record<string, unknown> = { tenantId: DEFAULT_TENANT_ID };
+      if (q) {
+        where.OR = [
+          { firstName: { contains: q } },
+          { lastName: { contains: q } },
+          { email: { contains: q } },
+          { company: { contains: q } },
+        ];
+      }
+      const contacts = await db.crmContact.findMany({ where, take: limit, orderBy: { createdAt: 'desc' } });
+      const total = await db.crmContact.count({ where });
+      return {
+        success: true,
+        query: q,
+        contacts: contacts.map((c) => ({
+          id: c.id, firstName: c.firstName, lastName: c.lastName,
+          email: c.email, phone: c.phone, company: c.company,
+          title: c.title, status: c.status, source: c.source,
+        })),
+        total,
+      };
     },
     permissions: ['crm.contacts.read'],
     cache: { enabled: true, ttl: 30000 },
@@ -117,8 +162,20 @@ export async function bootstrapPlatform(): Promise<void> {
       },
       required: ['contactId'],
     },
-    execute: async (params) => {
-      return { success: true, contact: { id: params.contactId } };
+    execute: async (params: Record<string, unknown>) => {
+      const contact = await db.crmContact.findUnique({ where: { id: String(params.contactId), tenantId: DEFAULT_TENANT_ID } });
+      if (!contact) return { success: false, error: 'Contact not found' };
+      return {
+        success: true,
+        contact: {
+          id: contact.id, firstName: contact.firstName, lastName: contact.lastName,
+          email: contact.email, phone: contact.phone, company: contact.company,
+          title: contact.title, status: contact.status,
+          tags: (() => { try { return JSON.parse(contact.tags); } catch { return []; } })(),
+          notes: contact.notes, source: contact.source,
+          createdAt: contact.createdAt, updatedAt: contact.updatedAt,
+        },
+      };
     },
     permissions: ['crm.contacts.read'],
     version: '1.0.0',
@@ -133,7 +190,27 @@ export async function bootstrapPlatform(): Promise<void> {
     name: 'Search Contacts',
     description: 'Search contacts by name, email, phone, or company',
     inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
-    handler: async (input) => ({ results: [], total: 0 }),
+    handler: async (input) => {
+      const q = input.query || '';
+      const where: Record<string, unknown> = { tenantId: DEFAULT_TENANT_ID };
+      if (q) {
+        where.OR = [
+          { firstName: { contains: q } },
+          { lastName: { contains: q } },
+          { email: { contains: q } },
+          { company: { contains: q } },
+        ];
+      }
+      const contacts = await db.crmContact.findMany({ where, take: 50, orderBy: { createdAt: 'desc' } });
+      const total = await db.crmContact.count({ where });
+      return {
+        results: contacts.map((c) => ({
+          id: c.id, firstName: c.firstName, lastName: c.lastName,
+          email: c.email, company: c.company, status: c.status,
+        })),
+        total,
+      };
+    },
     version: '1.0.0',
     tags: ['crm', 'contacts', 'search'],
   });
@@ -156,7 +233,23 @@ export async function bootstrapPlatform(): Promise<void> {
       },
       required: ['firstName', 'lastName'],
     },
-    handler: async (input) => ({ id: `contact_${Date.now()}`, ...input }),
+    handler: async (input) => {
+      const contact = await db.crmContact.create({
+        data: {
+          tenantId: DEFAULT_TENANT_ID,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email: input.email || null,
+          phone: input.phone || null,
+          company: input.company || null,
+          title: input.title || null,
+          tags: '[]',
+          metadata: '{}',
+        },
+      });
+      await eventBus.emit('contact.created', { id: contact.id, ...input });
+      return { id: contact.id, firstName: contact.firstName, lastName: contact.lastName };
+    },
     version: '1.0.0',
     tags: ['crm', 'contacts', 'create'],
   });
@@ -168,7 +261,20 @@ export async function bootstrapPlatform(): Promise<void> {
     name: 'Read Contact',
     description: 'Read a contact by ID',
     inputSchema: { type: 'object', properties: { contactId: { type: 'string' } }, required: ['contactId'] },
-    handler: async (input) => ({ contact: null }),
+    handler: async (input) => {
+      const contact = await db.crmContact.findUnique({ where: { id: input.contactId, tenantId: DEFAULT_TENANT_ID } });
+      if (!contact) return { contact: null, error: 'Contact not found' };
+      return {
+        contact: {
+          id: contact.id, firstName: contact.firstName, lastName: contact.lastName,
+          email: contact.email, phone: contact.phone, company: contact.company,
+          title: contact.title, status: contact.status,
+          tags: (() => { try { return JSON.parse(contact.tags); } catch { return []; } })(),
+          notes: contact.notes, source: contact.source,
+          createdAt: contact.createdAt, updatedAt: contact.updatedAt,
+        },
+      };
+    },
     version: '1.0.0',
     tags: ['crm', 'contacts', 'read'],
   });
@@ -184,7 +290,24 @@ export async function bootstrapPlatform(): Promise<void> {
       properties: { contactId: { type: 'string' }, data: { type: 'object' } },
       required: ['contactId', 'data'],
     },
-    handler: async (input) => ({ success: true }),
+    handler: async (input) => {
+      const { contactId, data } = input;
+      const existing = await db.crmContact.findUnique({ where: { id: contactId, tenantId: DEFAULT_TENANT_ID } });
+      if (!existing) return { success: false, error: 'Contact not found' };
+      const updateData: Record<string, unknown> = {};
+      if (data.firstName !== undefined) updateData.firstName = data.firstName;
+      if (data.lastName !== undefined) updateData.lastName = data.lastName;
+      if (data.email !== undefined) updateData.email = data.email || null;
+      if (data.phone !== undefined) updateData.phone = data.phone || null;
+      if (data.company !== undefined) updateData.company = data.company || null;
+      if (data.title !== undefined) updateData.title = data.title || null;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags);
+      if (data.notes !== undefined) updateData.notes = data.notes || null;
+      const updated = await db.crmContact.update({ where: { id: contactId }, data: updateData });
+      await eventBus.emit('contact.updated', { id: updated.id, changes: Object.keys(updateData) });
+      return { success: true, contactId };
+    },
     version: '1.0.0',
     tags: ['crm', 'contacts', 'update'],
   });
@@ -196,7 +319,13 @@ export async function bootstrapPlatform(): Promise<void> {
     name: 'Delete Contact',
     description: 'Delete a contact permanently',
     inputSchema: { type: 'object', properties: { contactId: { type: 'string' } }, required: ['contactId'] },
-    handler: async (input) => ({ success: true }),
+    handler: async (input) => {
+      const existing = await db.crmContact.findUnique({ where: { id: input.contactId, tenantId: DEFAULT_TENANT_ID } });
+      if (!existing) return { success: false, error: 'Contact not found' };
+      await db.crmContact.delete({ where: { id: input.contactId } });
+      await eventBus.emit('contact.deleted', { id: existing.id, firstName: existing.firstName, lastName: existing.lastName });
+      return { success: true, deletedId: input.contactId };
+    },
     version: '1.0.0',
     tags: ['crm', 'contacts', 'delete'],
   });
@@ -208,7 +337,20 @@ export async function bootstrapPlatform(): Promise<void> {
     name: 'Analyze Contacts',
     description: 'AI-powered analysis of contact data',
     inputSchema: { type: 'object', properties: { analysisType: { type: 'string', enum: ['distribution', 'trends', 'summary'] } } },
-    handler: async () => ({ analysis: {} }),
+    handler: async () => {
+      const [statusGroups, total, recent] = await Promise.all([
+        db.crmContact.groupBy({ by: ['status'], where: { tenantId: DEFAULT_TENANT_ID }, _count: true }),
+        db.crmContact.count({ where: { tenantId: DEFAULT_TENANT_ID } }),
+        db.crmContact.findMany({ where: { tenantId: DEFAULT_TENANT_ID }, orderBy: { createdAt: 'desc' }, take: 5 }),
+      ]);
+      return {
+        analysis: {
+          total,
+          byStatus: statusGroups.map((g) => ({ status: g.status, count: g._count })),
+          recent: recent.map((c) => ({ id: c.id, firstName: c.firstName, lastName: c.lastName, status: c.status, createdAt: c.createdAt })),
+        },
+      };
+    },
     version: '1.0.0',
     tags: ['crm', 'contacts', 'analyze', 'ai'],
   });

@@ -116,6 +116,7 @@ model Tenant {
   eventLogs       EventLog[]
   apiKeys         ApiKey[]
   builderComponents BuilderComponent[]
+  crmContacts      CrmContact[]
 }
 
 // ============================================================
@@ -560,4 +561,34 @@ model BuilderComponent {
   @@index([tenantId])
   @@index([type])
   @@index([pluginId])
+}
+
+// ============================================================
+// 15. CRM — Contacts
+// ============================================================
+
+model CrmContact {
+  id          String   @id @default(cuid())
+  tenantId    String
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  company     String?
+  title       String?
+  status      String   @default("active")
+  tags        String   @default("[]")  // JSON array stored as string
+  notes       String?
+  source      String   @default("manual")
+  metadata    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([firstName, lastName])
+  @@index([email])
+  @@index([company])
+  @@index([status])
 }

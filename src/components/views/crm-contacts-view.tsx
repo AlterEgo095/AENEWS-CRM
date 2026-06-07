@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -75,83 +75,8 @@ interface Contact {
 }
 
 // ============================================================
-// Seed Data
+// Seed Data (removed — now using real API)
 // ============================================================
-
-const SEED_CONTACTS: Contact[] = [
-  {
-    id: 'c1', firstName: 'Sarah', lastName: 'Chen', email: 'sarah.chen@acmecorp.com',
-    phone: '+1 (555) 234-5678', company: 'Acme Corp', title: 'VP of Engineering',
-    status: 'customer', tags: ['vip', 'partner'], lastContactAt: '2025-01-15',
-    source: 'Referral', notes: 'Key account — renewal in Q2',
-  },
-  {
-    id: 'c2', firstName: 'James', lastName: 'Wilson', email: 'j.wilson@techflow.io',
-    phone: '+1 (555) 345-6789', company: 'TechFlow', title: 'CTO',
-    status: 'prospect', tags: ['lead'], lastContactAt: '2025-01-12',
-    source: 'Web Form', notes: 'Interested in enterprise plan',
-  },
-  {
-    id: 'c3', firstName: 'Maria', lastName: 'Garcia', email: 'maria.g@innovate.dev',
-    phone: '+1 (555) 456-7890', company: 'InnovateDev', title: 'Product Manager',
-    status: 'active', tags: ['customer'], lastContactAt: '2025-01-10',
-    source: 'API', notes: 'Uses plugin SDK for custom integrations',
-  },
-  {
-    id: 'c4', firstName: 'David', lastName: 'Kim', email: 'd.kim@globalfin.com',
-    phone: '+1 (555) 567-8901', company: 'Global Finance', title: 'Head of IT',
-    status: 'lead', tags: ['lead'], lastContactAt: '2025-01-08',
-    source: 'Import', notes: 'Enterprise lead — needs security compliance review',
-  },
-  {
-    id: 'c5', firstName: 'Emma', lastName: 'Thompson', email: 'emma.t@buildfast.co',
-    phone: '+1 (555) 678-9012', company: 'BuildFast', title: 'Developer Advocate',
-    status: 'customer', tags: ['partner', 'vip'], lastContactAt: '2025-01-14',
-    source: 'Referral', notes: 'Partnership contact for plugin marketplace',
-  },
-  {
-    id: 'c6', firstName: 'Alex', lastName: 'Rivera', email: 'alex.r@nextera.io',
-    phone: '+1 (555) 789-0123', company: 'NextEra', title: 'Solutions Architect',
-    status: 'prospect', tags: ['lead'], lastContactAt: '2025-01-05',
-    source: 'Web Form', notes: 'Evaluating against competitors',
-  },
-  {
-    id: 'c7', firstName: 'Lisa', lastName: 'Park', email: 'lisa.park@datawise.com',
-    phone: '+1 (555) 890-1234', company: 'DataWise', title: 'Data Engineer',
-    status: 'active', tags: ['customer'], lastContactAt: '2025-01-11',
-    source: 'Manual', notes: 'Heavy user of analytics plugins',
-  },
-  {
-    id: 'c8', firstName: 'Robert', lastName: 'Zhang', email: 'r.zhang@cloudbase.net',
-    phone: '+1 (555) 901-2345', company: 'CloudBase', title: 'CEO',
-    status: 'lead', tags: ['vip'], lastContactAt: '2025-01-09',
-    source: 'API', notes: 'Strategic partnership opportunity',
-  },
-  {
-    id: 'c9', firstName: 'Priya', lastName: 'Sharma', email: 'priya@apexsol.com',
-    phone: '+1 (555) 012-3456', company: 'Apex Solutions', title: 'HR Director',
-    status: 'prospect', tags: [], lastContactAt: '2024-12-28',
-    source: 'Web Form', notes: 'Interested in HR module',
-  },
-  {
-    id: 'c10', firstName: 'Tom', lastName: 'Brennan', email: 't.brennan@logistix.co',
-    phone: '+1 (555) 123-4567', company: 'Logistix', title: 'Operations Manager',
-    status: 'customer', tags: ['customer'], lastContactAt: '2025-01-13',
-    source: 'Referral', notes: 'Uses workflow engine extensively',
-  },
-  {
-    id: 'c11', firstName: 'Nina', lastName: 'Petrov', email: 'nina.p@synergylabs.io',
-    phone: '+1 (555) 234-5679', company: 'Synergy Labs', title: 'AI Researcher',
-    status: 'active', tags: ['partner'], lastContactAt: '2025-01-16',
-    source: 'API', notes: 'Collaborating on AI gateway integration',
-  },
-  {
-    id: 'c12', firstName: 'Marcus', lastName: 'Johnson', email: 'm.johnson@retailplus.com',
-    phone: '+1 (555) 345-6780', company: 'RetailPlus', title: 'CIO',
-    status: 'inactive', tags: [], lastContactAt: '2024-11-20',
-    source: 'Import', notes: 'Contract ended — potential re-engagement Q3',
-  },
-];
 
 // CRM Plugin capabilities
 const CRM_CAPABILITIES = [
@@ -203,13 +128,59 @@ const TAG_STYLES: Record<string, string> = {
 // ============================================================
 
 export default function CrmContactsView() {
-  const [contacts, setContacts] = useState<Contact[]>(SEED_CONTACTS);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [sortField, setSortField] = useState<string>('lastName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showNewContactDialog, setShowNewContactDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch contacts from API
+  const fetchContacts = useCallback(async (query?: string) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (query) params.set('q', query);
+      if (activeTab !== 'all') params.set('status', activeTab);
+      params.set('sort', sortField);
+      params.set('order', sortDirection);
+      params.set('limit', '100');
+      const res = await fetch(`/api/crm/contacts?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setContacts(
+          data.contacts.map((c: any) => ({
+            ...c,
+            phone: c.phone || '',
+            company: c.company || '',
+            title: c.title || '',
+            email: c.email || '',
+            lastContactAt: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to fetch contacts:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, sortField, sortDirection]);
+
+  // Load on mount and when tab changes
+  useEffect(() => {
+    let cancelled = false;
+    (async () => { await fetchContacts(); })();
+    return () => { cancelled = true; };
+  }, [fetchContacts]);
+
+  // Debounced search
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => { await fetchContacts(searchQuery); }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [searchQuery, fetchContacts]);
 
   // Filter contacts
   const filteredContacts = useMemo(() => {
@@ -369,6 +340,15 @@ export default function CrmContactsView() {
           {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort)}
         </TabsContent>
       </Tabs>
+
+      {/* ─── Loading skeleton ─── */}
+      {loading && contacts.length === 0 && (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))}
+        </div>
+      )}
 
       {/* ─── New Contact Dialog (simple inline form) ─── */}
       {showNewContactDialog && (
@@ -783,26 +763,53 @@ function NewContactInline({
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState('lead');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName.trim() || !lastName.trim()) return;
 
-    const newContact: Contact = {
-      id: `c_${Date.now()}`,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.trim(),
-      phone: '',
-      company: company.trim(),
-      title: title.trim(),
-      status: status as Contact['status'],
-      tags: ['lead'],
-      lastContactAt: new Date().toISOString().split('T')[0],
-      source: 'Manual',
-      notes: '',
-    };
-
-    onAdd(newContact);
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/crm/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim() || undefined,
+          company: company.trim() || undefined,
+          title: title.trim() || undefined,
+          status: status || 'lead',
+          tags: ['lead'],
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const c = data.contact;
+        const newContact: Contact = {
+          id: c.id,
+          firstName: c.firstName,
+          lastName: c.lastName,
+          email: c.email || '',
+          phone: c.phone || '',
+          company: c.company || '',
+          title: c.title || '',
+          status: c.status as Contact['status'],
+          tags: c.tags || [],
+          lastContactAt: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
+          source: c.source || 'Manual',
+          notes: c.notes || '',
+        };
+        onAdd(newContact);
+      } else {
+        console.error('Failed to create contact');
+      }
+    } catch (err) {
+      console.error('Failed to create contact:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -886,10 +893,10 @@ function NewContactInline({
           <div className="flex items-center gap-3">
             <Button
               type="submit"
-              disabled={!firstName.trim() || !lastName.trim()}
+              disabled={!firstName.trim() || !lastName.trim() || submitting}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              Create Contact
+              {submitting ? 'Creating...' : 'Create Contact'}
             </Button>
             <span className="text-xs text-muted-foreground">
               Uses Tool: create_contact · Permission: crm.contacts.write

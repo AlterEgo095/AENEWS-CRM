@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Puzzle,
   Download,
@@ -35,28 +35,30 @@ import { toast } from 'sonner';
 // ============================================================
 
 export default function PluginsView() {
-  const { plugins, setPlugins, pluginsLoading, setPluginsLoading } = useAppStore();
+  const plugins = useAppStore((s) => s.plugins);
+  const pluginsLoading = useAppStore((s) => s.pluginsLoading);
+  const setPlugins = useAppStore((s) => s.setPlugins);
+  const setPluginsLoading = useAppStore((s) => s.setPluginsLoading);
   const { user } = useAuthStore();
 
-  const fetchPlugins = useCallback(async () => {
-    if (!user?.tenantId) return;
-    setPluginsLoading(true);
-    try {
-      const res = await fetch(`/api/plugins?tenantId=${user.tenantId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setPlugins(data.plugins);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setPluginsLoading(false);
-    }
-  }, [user?.tenantId, setPlugins, setPluginsLoading]);
-
   useEffect(() => {
+    const fetchPlugins = async () => {
+      if (!user?.tenantId) return;
+      setPluginsLoading(true);
+      try {
+        const res = await fetch(`/api/plugins?tenantId=${user.tenantId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPlugins(data.plugins);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setPluginsLoading(false);
+      }
+    };
     fetchPlugins();
-  }, [fetchPlugins]);
+  }, [user?.tenantId, setPlugins, setPluginsLoading]);
 
   const handleInstall = async (plugin: PluginInfo) => {
     if (!user?.tenantId) return;
