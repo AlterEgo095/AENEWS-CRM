@@ -1,45 +1,26 @@
 'use client';
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import * as LucideIcons from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
-  Shield,
-  Building2,
-  Lock,
-  Code2,
-  Download,
-  Play,
-  ListOrdered,
-  Layers,
-  Wrench,
-  LayoutGrid,
-  ArrowRightLeft,
-  Database,
-  Globe,
-  Brain,
-  GitBranch,
-  Settings,
-  Search,
-  HardDrive,
-  Hammer,
-  CreditCard,
-  FileSearch,
-  Bell,
-  Activity,
-  Puzzle,
-  Zap,
   CheckCircle2,
   Clock,
-  ScanSearch,
+  Activity,
+  Zap,
+  ChevronDown,
+  ChevronRight,
+  Sparkles,
   Layers3,
   Workflow,
   HeartPulse,
-  ChevronDown,
-  ChevronRight,
-  Package,
+  ScanSearch,
+  Layers,
+  LayoutGrid,
+  GitBranch,
   Boxes,
-  Layout,
-  Sparkles,
-  type LucideIcon,
+  Package,
+  ArrowUpRight,
 } from 'lucide-react';
 
 import { useAppStore } from '@/store/app-store';
@@ -55,14 +36,57 @@ import { Separator } from '@/components/ui/separator';
 // Types
 // ============================================================
 
-interface EngineModule {
+interface EngineData {
   id: string;
   name: string;
+  version: string;
+  status: string;
   description: string;
-  icon: LucideIcon;
-  status: 'active' | 'ready';
-  category: 'foundation' | 'plugin-system' | 'registry' | 'gateway' | 'core-service';
-  uptime: string;
+  category: string;
+  icon: string;
+  stats?: Record<string, any>;
+}
+
+interface PluginData {
+  id: string;
+  name: string;
+  slug: string;
+  version: string;
+  description: string;
+  status: string;
+  tools: number;
+  capabilities: number;
+  agents: number;
+  knowledge: number;
+  schemas: number;
+  uiExtensions: number;
+}
+
+interface DashboardCardData {
+  id: string;
+  pluginId: string;
+  title: string;
+  description?: string | null;
+  icon?: string | null;
+  value?: string | number | null;
+  trend?: string | null;
+  href?: string | null;
+  color?: string | null;
+  order?: number;
+}
+
+interface ArchitectureData {
+  platform: {
+    name: string;
+    version: string;
+    tagline: string;
+    bootstrapped: boolean;
+  };
+  engines: EngineData[];
+  plugins: PluginData[];
+  totalEngines: number;
+  dashboardCards?: DashboardCardData[];
+  uiStats?: Record<string, number>;
 }
 
 interface SystemEvent {
@@ -74,77 +98,38 @@ interface SystemEvent {
 }
 
 // ============================================================
-// Static Data — Core Engine Modules
+// Category configuration — derived from API at runtime
 // ============================================================
 
-const coreEngines: EngineModule[] = [
-  // Foundation
-  { id: 'auth', name: 'Auth Engine', description: 'JWT + session-based authentication with multi-factor support', icon: Shield, status: 'active', category: 'foundation', uptime: '99.99%' },
-  { id: 'tenant', name: 'Tenant Engine', description: 'Multi-tenant isolation with configurable data boundaries', icon: Building2, status: 'active', category: 'foundation', uptime: '99.98%' },
-  { id: 'rbac', name: 'RBAC Engine', description: 'Role-based access control with granular permission policies', icon: Lock, status: 'active', category: 'foundation', uptime: '99.97%' },
+const CORE_CATEGORIES = ['core', 'ai', 'infrastructure', 'security', 'dev-tools'];
+const MARKETPLACE_CATEGORIES = ['builder', 'data', 'automation', 'ui'];
 
-  // Plugin System
-  { id: 'plugin-sdk', name: 'Plugin SDK', description: 'Development toolkit for building and packaging plugins', icon: Code2, status: 'active', category: 'plugin-system', uptime: '100%' },
-  { id: 'plugin-loader', name: 'Plugin Loader', description: 'Dynamic plugin discovery, install, and lifecycle management', icon: Download, status: 'active', category: 'plugin-system', uptime: '99.95%' },
-  { id: 'plugin-runtime', name: 'Plugin Runtime', description: 'Sandboxed execution environment with resource isolation', icon: Play, status: 'active', category: 'plugin-system', uptime: '99.93%' },
-  { id: 'plugin-registry', name: 'Plugin Registry', description: 'Central repository for plugin metadata and versions', icon: ListOrdered, status: 'active', category: 'plugin-system', uptime: '99.99%' },
-
-  // Registries
-  { id: 'capability-registry', name: 'Capability Registry', description: 'Registers and resolves plugin capabilities and features', icon: Layers, status: 'active', category: 'registry', uptime: '99.98%' },
-  { id: 'tool-registry', name: 'Tool Registry', description: 'AI-callable tool registration with schema validation', icon: Wrench, status: 'active', category: 'registry', uptime: '99.97%' },
-  { id: 'ui-registry', name: 'UI Registry', description: 'Dynamic sidebar, page, and widget registration system', icon: LayoutGrid, status: 'active', category: 'registry', uptime: '99.96%' },
-
-  // Gateways
-  { id: 'event-bus', name: 'Event Bus', description: 'High-throughput publish/subscribe event messaging system', icon: ArrowRightLeft, status: 'active', category: 'gateway', uptime: '99.99%' },
-  { id: 'event-store', name: 'Event Store', description: 'Persistent event log with replay and audit capabilities', icon: Database, status: 'active', category: 'gateway', uptime: '99.98%' },
-  { id: 'mcp-gateway', name: 'MCP Gateway', description: 'Model Context Protocol integration for AI agent communication', icon: Globe, status: 'active', category: 'gateway', uptime: '99.94%' },
-  { id: 'ai-gateway', name: 'AI Gateway', description: 'Unified AI model routing with fallback and load balancing', icon: Brain, status: 'active', category: 'gateway', uptime: '99.91%' },
-
-  // Core Services
-  { id: 'workflow', name: 'Workflow Engine', description: 'Visual workflow orchestration with conditional branching', icon: GitBranch, status: 'active', category: 'core-service', uptime: '99.96%' },
-  { id: 'settings', name: 'Settings Engine', description: 'Hierarchical configuration management with inheritance', icon: Settings, status: 'active', category: 'core-service', uptime: '99.99%' },
-  { id: 'search', name: 'Search Engine', description: 'Full-text search with faceted filtering and ranking', icon: Search, status: 'active', category: 'core-service', uptime: '99.95%' },
-  { id: 'storage', name: 'Storage Engine', description: 'Multi-backend storage abstraction with file management', icon: HardDrive, status: 'active', category: 'core-service', uptime: '99.98%' },
-  { id: 'builder', name: 'Builder Engine', description: 'Plugin packaging, build pipeline, and asset optimization', icon: Hammer, status: 'active', category: 'core-service', uptime: '99.92%' },
-  { id: 'billing', name: 'Billing Engine', description: 'Usage metering, invoicing, and subscription management', icon: CreditCard, status: 'ready', category: 'core-service', uptime: '99.97%' },
-  { id: 'audit', name: 'Audit Engine', description: 'Comprehensive audit trail with tamper-proof logging', icon: FileSearch, status: 'active', category: 'core-service', uptime: '99.99%' },
-  { id: 'notification', name: 'Notification Engine', description: 'Multi-channel notifications (email, push, in-app, webhook)', icon: Bell, status: 'active', category: 'core-service', uptime: '99.96%' },
-];
-
-const categoryLabels: Record<EngineModule['category'], string> = {
-  foundation: 'Foundation',
-  'plugin-system': 'Plugin System',
-  registry: 'Registries',
-  gateway: 'Gateways & Messaging',
-  'core-service': 'Core Services',
+const CATEGORY_LABELS: Record<string, string> = {
+  core: 'Core Plugin System',
+  ai: 'AI & Intelligence',
+  infrastructure: 'Infrastructure',
+  security: 'Security & Identity',
+  'dev-tools': 'Developer Tools',
+  builder: 'Builder & UI',
+  data: 'Data & Schema',
+  automation: 'Automation',
+  ui: 'UI Extensions',
 };
 
-const categoryOrder: EngineModule['category'][] = ['foundation', 'plugin-system', 'registry', 'gateway', 'core-service'];
+// Category color map for architecture blocks
+const CATEGORY_COLORS: Record<string, string> = {
+  core: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+  ai: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+  infrastructure: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+  security: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+  'dev-tools': 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  builder: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800',
+  data: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
+  automation: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+  ui: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800',
+};
 
-// ============================================================
-// Static Data — Mock System Events
-// ============================================================
-
-const mockEvents: SystemEvent[] = [
-  { id: '1', type: 'success', message: 'Plugin "CRM Pro" activated successfully', source: 'Plugin Runtime', timestamp: '2m ago' },
-  { id: '2', type: 'info', message: 'AI Gateway routed request to GPT-4o model', source: 'AI Gateway', timestamp: '5m ago' },
-  { id: '3', type: 'success', message: 'Workflow "Customer Onboarding" completed', source: 'Workflow Engine', timestamp: '8m ago' },
-  { id: '4', type: 'info', message: 'Event Bus throughput: 12,847 events/min', source: 'Event Bus', timestamp: '12m ago' },
-  { id: '5', type: 'warning', message: 'Storage Engine nearing 75% capacity threshold', source: 'Storage Engine', timestamp: '18m ago' },
-  { id: '6', type: 'success', message: 'New capability registered: "invoice.generate"', source: 'Capability Registry', timestamp: '25m ago' },
-  { id: '7', type: 'info', message: 'MCP Gateway connected 3 new AI agent sessions', source: 'MCP Gateway', timestamp: '31m ago' },
-  { id: '8', type: 'success', message: 'Audit log checkpoint saved (snapshot #4,291)', source: 'Audit Engine', timestamp: '45m ago' },
-  { id: '9', type: 'info', message: 'Search index rebuilt for 1,247 documents', source: 'Search Engine', timestamp: '1h ago' },
-  { id: '10', type: 'success', message: 'Billing Engine generated monthly invoice batch', source: 'Billing Engine', timestamp: '1h ago' },
-  { id: '11', type: 'info', message: 'Plugin SDK v2.4.1 compatibility check passed', source: 'Plugin SDK', timestamp: '2h ago' },
-  { id: '12', type: 'warning', message: 'Tenant "Acme Corp" approaching API rate limit', source: 'Tenant Engine', timestamp: '2h ago' },
-];
-
-// ============================================================
-// Static Data — Marketplace Apps (for architecture diagram)
-// ============================================================
-
-const marketplaceApps = [
+const BUSINESS_MODULES = [
   { name: 'CRM', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
   { name: 'ERP', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
   { name: 'Finance', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800' },
@@ -172,66 +157,144 @@ export default function DashboardView() {
   } = useAppStore();
   const { user } = useAuthStore();
 
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(categoryOrder)
-  );
+  // Architecture data from API
+  const [archData, setArchData] = useState<ArchitectureData | null>(null);
+  const [archLoading, setArchLoading] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
-  const fetchSystemStats = useCallback(async () => {
-    setSystemLoading(true);
-    try {
-      const res = await fetch('/api/system');
-      if (res.ok) {
-        const data = await res.json();
-        setSystemStats(data);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setSystemLoading(false);
-    }
-  }, [setSystemStats, setSystemLoading]);
-
-  const fetchEvents = useCallback(async () => {
-    setEventsLoading(true);
-    try {
-      const res = await fetch('/api/events?limit=10');
-      if (res.ok) {
-        const data = await res.json();
-        setRecentEvents(data.events);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setEventsLoading(false);
-    }
-  }, [setRecentEvents, setEventsLoading]);
+  // UI Extensions data
+  const [uiExtensions, setUiExtensions] = useState<any>(null);
 
   useEffect(() => {
-    fetchSystemStats();
-    fetchEvents();
+    let cancelled = false;
+
+    // Fetch architecture data
+    void (async () => {
+      try {
+        const res = await fetch('/api/architecture');
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setArchData(data);
+          const cats = new Set<string>();
+          data.engines.forEach((e: EngineData) => cats.add(e.category));
+          setExpandedCategories(cats);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setArchLoading(false);
+      }
+    })();
+
+    // Fetch UI extensions for dashboard cards and stats
+    void (async () => {
+      try {
+        const res = await fetch('/api/ui-extensions');
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setUiExtensions(data);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+
+    // Fetch system stats (legacy, for events loading state)
+    const loadSystemStats = async () => {
+      try {
+        const res = await fetch('/api/system');
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setSystemStats(data);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void loadSystemStats();
+
+    // Fetch events
+    const loadEvents = async () => {
+      try {
+        const res = await fetch('/api/events?limit=15');
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setRecentEvents(data.events);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void loadEvents();
 
     const interval = setInterval(() => {
-      fetchSystemStats();
-      fetchEvents();
+      void loadSystemStats();
+      void loadEvents();
     }, 30000);
 
-    return () => clearInterval(interval);
-  }, [fetchSystemStats, fetchEvents]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [setSystemStats, setRecentEvents]);
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(cat)) {
-        next.delete(cat);
-      } else {
-        next.add(cat);
-      }
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
       return next;
     });
   };
 
-  const activeEngines = coreEngines.filter((e) => e.status === 'active').length;
-  const readyEngines = coreEngines.filter((e) => e.status === 'ready').length;
+  // Group engines by category
+  const enginesByCategory = React.useMemo(() => {
+    if (!archData) return {};
+    const groups: Record<string, EngineData[]> = {};
+    archData.engines.forEach((e) => {
+      if (!groups[e.category]) groups[e.category] = [];
+      groups[e.category].push(e);
+    });
+    return groups;
+  }, [archData]);
+
+  // Category order from data
+  const categoryOrder = React.useMemo(() => {
+    return Object.keys(enginesByCategory);
+  }, [enginesByCategory]);
+
+  // Plugin stats totals
+  const pluginTotals = React.useMemo(() => {
+    if (!archData) return { tools: 0, capabilities: 0, agents: 0, knowledge: 0, schemas: 0, uiExtensions: 0 };
+    return archData.plugins.reduce(
+      (acc, p) => ({
+        tools: acc.tools + p.tools,
+        capabilities: acc.capabilities + p.capabilities,
+        agents: acc.agents + p.agents,
+        knowledge: acc.knowledge + p.knowledge,
+        schemas: acc.schemas + p.schemas,
+        uiExtensions: acc.uiExtensions + p.uiExtensions,
+      }),
+      { tools: 0, capabilities: 0, agents: 0, knowledge: 0, schemas: 0, uiExtensions: 0 }
+    );
+  }, [archData]);
+
+  // Dashboard cards from UI extensions
+  const dashboardCards = React.useMemo(() => {
+    if (uiExtensions?.dashboardCards) return uiExtensions.dashboardCards as DashboardCardData[];
+    if (archData?.dashboardCards) return archData.dashboardCards;
+    return [];
+  }, [uiExtensions, archData]);
+
+  const activeEngines = archData
+    ? archData.engines.filter((e) => e.status === 'active').length
+    : 0;
+  const readyEngines = archData
+    ? archData.engines.filter((e) => e.status === 'ready').length
+    : 0;
+
+  // UI Stats from extensions or architecture
+  const uiStats = uiExtensions?.stats || {};
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -239,10 +302,10 @@ export default function DashboardView() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Core Architecture
+            {archData?.platform.name || 'Core Architecture'}
           </h1>
           <p className="text-muted-foreground mt-1">
-            AENEWS Enterprise OS — Kernel module overview and system health.
+            {archData?.platform.tagline || 'AENEWS Enterprise OS'} — Kernel module overview and system health.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -261,55 +324,88 @@ export default function DashboardView() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 1 — Core Engine Status Grid
+          SECTION 1 — Plugin Dashboard Cards
+          ═══════════════════════════════════════════════════════════ */}
+      {dashboardCards.length > 0 && (
+        <section aria-label="Dashboard Cards">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dashboardCards.slice(0, 3).map((card) => (
+              <DashboardCardWidget key={card.id} card={card} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          SECTION 2 — Core Engine Modules (from API)
           ═══════════════════════════════════════════════════════════ */}
       <section aria-label="Core Engine Modules">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="h-5 w-5 text-emerald-500" />
-          <h2 className="text-lg font-semibold">Core Engine Modules</h2>
-          <Badge variant="outline" className="ml-1">{coreEngines.length} engines</Badge>
+          <h2 className="text-lg font-semibold">Engine Modules</h2>
+          <Badge variant="outline" className="ml-1">{archData?.totalEngines || '—'} engines</Badge>
         </div>
 
-        <div className="space-y-4">
-          {categoryOrder.map((cat) => {
-            const engines = coreEngines.filter((e) => e.category === cat);
-            const isExpanded = expandedCategories.has(cat);
-            return (
-              <div key={cat}>
-                {/* Category header */}
-                <button
-                  onClick={() => toggleCategory(cat)}
-                  className="flex items-center gap-2 mb-3 hover:text-foreground text-muted-foreground transition-colors group"
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                  <span className="text-sm font-semibold text-foreground">
-                    {categoryLabels[cat]}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {engines.length}
-                  </Badge>
-                </button>
-
-                {/* Engine cards grid */}
-                {isExpanded && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-2">
-                    {engines.map((engine) => (
-                      <EngineCard key={engine.id} engine={engine} />
-                    ))}
+        {archLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <Skeleton className="h-9 w-9 rounded-lg" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {categoryOrder.map((cat) => {
+              const engines = enginesByCategory[cat] || [];
+              const isExpanded = expandedCategories.has(cat);
+              return (
+                <div key={cat}>
+                  <button
+                    onClick={() => toggleCategory(cat)}
+                    className="flex items-center gap-2 mb-3 hover:text-foreground text-muted-foreground transition-colors group"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    <span className="text-sm font-semibold text-foreground">
+                      {CATEGORY_LABELS[cat] || cat}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {engines.length}
+                    </Badge>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-2">
+                      {engines.map((engine) => (
+                        <EngineCard key={engine.id} engine={engine} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 2 — Architecture Flow Diagram
+          SECTION 3 — Architecture Flow Diagram (3-Layer)
           ═══════════════════════════════════════════════════════════ */}
       <section aria-label="Architecture Diagram">
         <div className="flex items-center gap-2 mb-4">
@@ -319,7 +415,10 @@ export default function DashboardView() {
 
         <Card className="overflow-hidden">
           <CardContent className="p-6">
-            <ArchitectureDiagram />
+            <ArchitectureDiagram
+              engines={archData?.engines || []}
+              plugins={archData?.plugins || []}
+            />
           </CardContent>
         </Card>
       </section>
@@ -328,7 +427,7 @@ export default function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* ═══════════════════════════════════════════════════════════
-            SECTION 3 — Plugin System Stats
+            SECTION 4 — Plugin Ecosystem Stats (real data)
             ═══════════════════════════════════════════════════════════ */}
         <Card>
           <CardHeader className="pb-3">
@@ -336,45 +435,61 @@ export default function DashboardView() {
               <Layers3 className="h-5 w-5 text-emerald-500" />
               <CardTitle className="text-lg">Plugin Ecosystem</CardTitle>
             </div>
-            <CardDescription>System-wide plugin and capability metrics</CardDescription>
+            <CardDescription>Real-time metrics from all engine registries</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <StatRow
               icon={Package}
-              label="Total Plugins Registered"
-              value={systemStats ? String(systemStats.stats.plugins.total) : '24'}
-              loading={systemLoading}
+              label="Plugins Registered"
+              value={String(archData?.plugins.length ?? '—')}
+              loading={archLoading}
             />
             <StatRow
               icon={Zap}
               label="Active Plugins"
-              value={systemStats ? String(systemStats.stats.plugins.active) : '18'}
-              loading={systemLoading}
+              value={String(archData?.plugins.filter((p) => p.status === 'active').length ?? '—')}
+              loading={archLoading}
               accent="emerald"
             />
+            <Separator />
             <StatRow
               icon={Layers}
               label="Total Capabilities"
-              value="147"
+              value={String(pluginTotals.capabilities)}
+              loading={archLoading}
             />
             <StatRow
-              icon={Wrench}
+              icon={LucideIcons.Wrench as unknown as LucideIcon}
               label="Total Tools Registered"
-              value={systemStats ? String(systemStats.stats.tools.registered) : '89'}
-              loading={systemLoading}
+              value={String(pluginTotals.tools)}
+              loading={archLoading}
             />
+            <StatRow
+              icon={LucideIcons.Bot as unknown as LucideIcon}
+              label="AI Agents"
+              value={String(pluginTotals.agents)}
+              loading={archLoading}
+            />
+            <StatRow
+              icon={LucideIcons.BookOpen as unknown as LucideIcon}
+              label="Knowledge Entries"
+              value={String(pluginTotals.knowledge)}
+              loading={archLoading}
+            />
+            <StatRow
+              icon={LucideIcons.FileCode as unknown as LucideIcon}
+              label="Schemas"
+              value={String(pluginTotals.schemas)}
+              loading={archLoading}
+            />
+            <Separator />
             <StatRow
               icon={LayoutGrid}
               label="UI Extensions"
-              value="34"
-              detail="Sidebar · Pages · Widgets"
+              value={String(uiStats.dashboardCards ? uiStats.sidebarItems + uiStats.pages + uiStats.dashboardCards + uiStats.actions + uiStats.commands : pluginTotals.uiExtensions)}
+              detail={`Sidebar: ${uiStats.sidebarItems ?? '—'} · Pages: ${uiStats.pages ?? '—'} · Cards: ${uiStats.dashboardCards ?? '—'}`}
+              loading={!uiExtensions}
             />
-            <StatRow
-              icon={GitBranch}
-              label="Total Workflows"
-              value="12"
-            />
-            <Separator />
             <StatRow
               icon={Activity}
               label="Event Bus Throughput"
@@ -385,7 +500,7 @@ export default function DashboardView() {
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════
-            SECTION 4 — Recent System Events
+            SECTION 5 — Recent System Events (from API)
             ═══════════════════════════════════════════════════════════ */}
         <Card>
           <CardHeader className="pb-3">
@@ -408,27 +523,31 @@ export default function DashboardView() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : recentEvents.length > 0 ? (
               <div className="space-y-1 max-h-[420px] overflow-y-auto custom-scrollbar">
-                {(recentEvents.length > 0
-                  ? recentEvents.map((e) => ({
+                {recentEvents.slice(0, 12).map((e) => (
+                  <EventRow
+                    key={e.id}
+                    event={{
                       id: e.id,
                       type: 'info' as const,
                       message: formatEventType(e.eventType),
                       source: e.sourcePlugin || 'System',
                       timestamp: formatTimeAgo(e.createdAt),
-                    }))
-                  : mockEvents
-                ).map((event) => (
-                  <EventRow key={event.id} event={event} />
+                    }}
+                  />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No events recorded yet.
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════
-            SECTION 5 — Quick Actions
+            SECTION 6 — Quick Actions
             ═══════════════════════════════════════════════════════════ */}
         <Card>
           <CardHeader className="pb-3">
@@ -488,19 +607,33 @@ export default function DashboardView() {
 // Sub-components
 // ============================================================
 
-function EngineCard({ engine }: { engine: EngineModule }) {
-  const Icon = engine.icon;
+// ─── Dynamic Lucide icon component (avoids static-component lint issue) ───
+
+function DynamicIcon({ name, className, fallback }: { name: string; className?: string; fallback?: LucideIcon }) {
+  const Icon = (LucideIcons as Record<string, LucideIcon>)[name] || fallback || LucideIcons.Box;
+  return <Icon className={className} />;
+}
+
+function EngineCard({ engine }: { engine: EngineData }) {
+
+  // Build stats text from engine stats
+  const statsText = engine.stats
+    ? Object.entries(engine.stats)
+        .filter(([, v]) => typeof v === 'number' && v > 0)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(' · ')
+    : null;
 
   return (
     <div className="group relative rounded-xl border bg-card p-4 hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200">
-      {/* Top row: Icon + Name + Badge */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-            <Icon className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+            <DynamicIcon name={engine.icon} className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-semibold leading-tight truncate">{engine.name}</h3>
+            <p className="text-[10px] text-muted-foreground">v{engine.version}</p>
           </div>
         </div>
         <Badge
@@ -519,22 +652,75 @@ function EngineCard({ engine }: { engine: EngineModule }) {
           {engine.status}
         </Badge>
       </div>
-      {/* Description */}
       <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
         {engine.description}
       </p>
-      {/* Uptime footer */}
-      <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-muted-foreground">
-        <Activity className="h-3 w-3" />
-        <span>Uptime: {engine.uptime}</span>
-      </div>
+      {statsText && (
+        <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-muted-foreground">
+          <Activity className="h-3 w-3" />
+          <span className="truncate">{statsText}</span>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Architecture Flow Diagram ───
+// ─── Dashboard Card Widget (from UI Registry) ───
 
-function ArchitectureDiagram() {
+function DashboardCardWidget({ card }: { card: DashboardCardData }) {
+
+  const colorClasses: Record<string, string> = {
+    emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+    blue: 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400',
+    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+    rose: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400',
+    violet: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+    teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
+  };
+
+  const iconBg = colorClasses[card.color || 'emerald'] || colorClasses.emerald;
+  const trendIsPositive = card.trend?.startsWith('+');
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4 flex items-start gap-4">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+          <DynamicIcon name={card.icon || ''} fallback={Package} className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground truncate">{card.title}</p>
+            {card.trend && (
+              <span className={`text-xs font-medium flex items-center gap-0.5 ${trendIsPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {card.trend}
+              </span>
+            )}
+          </div>
+          <p className="text-2xl font-bold mt-0.5">{card.value ?? '—'}</p>
+          {card.description && (
+            <p className="text-xs text-muted-foreground mt-0.5">{card.description}</p>
+          )}
+        </div>
+        {card.href && (
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Architecture Flow Diagram (3-Layer) ───
+
+function ArchitectureDiagram({
+  engines,
+  plugins,
+}: {
+  engines: EngineData[];
+  plugins: PluginData[];
+}) {
+  const coreEngines = engines.filter((e) => CORE_CATEGORIES.includes(e.category));
+  const marketplaceEngines = engines.filter((e) => !CORE_CATEGORIES.includes(e.category));
+
   return (
     <div className="flex flex-col items-center gap-0">
       {/* Top: AENEWS OS */}
@@ -545,66 +731,84 @@ function ArchitectureDiagram() {
       {/* Connector */}
       <div className="w-px h-6 bg-emerald-400 dark:bg-emerald-600" />
 
-      {/* Core Engine label */}
+      {/* CORE ENGINE Layer */}
       <div className="w-full max-w-3xl rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 px-6 py-3 text-center">
         <span className="font-bold text-sm text-slate-700 dark:text-slate-300 tracking-wide">CORE ENGINE</span>
+        <span className="text-xs text-muted-foreground ml-2">{coreEngines.length} modules</span>
       </div>
 
       {/* Connector */}
       <div className="w-px h-6 bg-slate-400 dark:bg-slate-600" />
 
-      {/* Engine modules grid inside a bordered container */}
+      {/* Core engine blocks */}
       <div className="w-full max-w-3xl rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 p-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {/* Foundation */}
-          <ArchBlock name="Auth" color="emerald" />
-          <ArchBlock name="Tenant" color="emerald" />
-          <ArchBlock name="RBAC" color="emerald" />
-
-          {/* Plugin System */}
-          <ArchBlock name="Plugin SDK" color="teal" />
-          <ArchBlock name="Plugin Loader" color="teal" />
-          <ArchBlock name="Plugin Runtime" color="teal" />
-          <ArchBlock name="Plugin Registry" color="teal" />
-
-          {/* Registries */}
-          <ArchBlock name="Capability Reg" color="amber" />
-          <ArchBlock name="Tool Registry" color="amber" />
-          <ArchBlock name="UI Registry" color="amber" />
-
-          {/* Gateways */}
-          <ArchBlock name="AI Gateway" color="rose" />
-          <ArchBlock name="MCP Gateway" color="rose" />
-          <ArchBlock name="Event Bus" color="rose" />
-          <ArchBlock name="Event Store" color="rose" />
-
-          {/* Core Services */}
-          <ArchBlock name="Workflow" color="slate" />
-          <ArchBlock name="Settings" color="slate" />
-          <ArchBlock name="Storage" color="slate" />
-          <ArchBlock name="Search" color="slate" />
-          <ArchBlock name="Builder" color="slate" />
-          <ArchBlock name="Billing" color="slate" />
-          <ArchBlock name="Audit" color="slate" />
-          <ArchBlock name="Notifications" color="slate" />
+          {coreEngines.map((e) => (
+            <div
+              key={e.id}
+              className={`rounded-md border px-3 py-2 text-center text-[11px] font-medium ${
+                CATEGORY_COLORS[e.category] || CATEGORY_COLORS.core
+              }`}
+            >
+              {e.name}
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Connector */}
       <div className="w-px h-6 bg-slate-400 dark:bg-slate-600" />
 
-      {/* Marketplace label */}
+      {/* MARKETPLACE Layer */}
       <div className="w-full max-w-3xl rounded-lg bg-amber-100 dark:bg-amber-900/30 border-2 border-dashed border-amber-300 dark:border-amber-700 px-6 py-3 text-center">
         <span className="font-bold text-sm text-amber-700 dark:text-amber-300 tracking-wide">MARKETPLACE</span>
+        <span className="text-xs text-muted-foreground ml-2">
+          {plugins.map((p) => `${p.tools} tools · ${p.capabilities} caps`).join(' | ')}
+        </span>
       </div>
 
       {/* Connector */}
       <div className="w-px h-6 bg-amber-400 dark:bg-amber-600" />
 
-      {/* Marketplace apps */}
+      {/* Marketplace content: plugin engines + business modules */}
       <div className="w-full max-w-3xl rounded-xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-4">
+        {/* Plugin engine blocks */}
+        {marketplaceEngines.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            {marketplaceEngines.map((e) => (
+              <div
+                key={e.id}
+                className={`rounded-md border px-3 py-2 text-center text-[11px] font-medium ${
+                  CATEGORY_COLORS[e.category] || CATEGORY_COLORS.core
+                }`}
+              >
+                {e.name}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Plugin capabilities */}
+        {plugins.length > 0 && (
+          <div className="mb-3">
+            <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mb-1.5 uppercase tracking-wider">Plugin Capabilities</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              {plugins.map((p) => (
+                <div key={p.id} className="rounded-md border border-amber-200 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/20 px-3 py-2 text-center">
+                  <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">{p.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {p.tools}t · {p.capabilities}c · {p.agents}a
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Business Modules */}
+        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Business Modules</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {marketplaceApps.map((app) => (
+          {BUSINESS_MODULES.map((app) => (
             <div
               key={app.name}
               className={`rounded-lg border px-3 py-2.5 text-center text-xs font-medium ${app.color}`}
@@ -614,22 +818,6 @@ function ArchitectureDiagram() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function ArchBlock({ name, color }: { name: string; color: string }) {
-  const colorMap: Record<string, string> = {
-    emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800',
-    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-    rose: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-  };
-
-  return (
-    <div className={`rounded-md border px-3 py-2 text-center text-[11px] font-medium ${colorMap[color] || colorMap.slate}`}>
-      {name}
     </div>
   );
 }

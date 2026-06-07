@@ -663,16 +663,23 @@ export class CapabilityRegistry {
     }
 
     // Required string fields
-    const requiredFields: Array<keyof CapabilityDefinition> = [
-      'id', 'pluginId', 'type', 'name', 'description', 'inputSchema', 'version',
+    const requiredStringFields: Array<keyof CapabilityDefinition> = [
+      'id', 'pluginId', 'type', 'name', 'description', 'version',
     ];
 
-    for (const field of requiredFields) {
+    for (const field of requiredStringFields) {
       if (!capability[field] || typeof capability[field] !== 'string') {
         throw new Error(
           `Capability definition missing or invalid required field: "${field}"`
         );
       }
+    }
+
+    // inputSchema is required but must be an object (JSON Schema)
+    if (!capability.inputSchema || typeof capability.inputSchema !== 'object') {
+      throw new Error(
+        `Capability definition missing or invalid required field: "inputSchema"`
+      );
     }
 
     // ID format: should be dot-separated, e.g. "crm.contacts.search"

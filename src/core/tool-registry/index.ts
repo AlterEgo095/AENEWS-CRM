@@ -337,6 +337,13 @@ export class ToolRegistry {
     return this.tenantActivePlugins.size;
   }
 
+  /**
+   * Get registry statistics.
+   */
+  getStats(): { size: number; tenants: number } {
+    return { size: this.tools.size, tenants: this.tenantActivePlugins.size };
+  }
+
   // ────────────────────────────────────────────────────────
   // Tenant Management
   // ────────────────────────────────────────────────────────

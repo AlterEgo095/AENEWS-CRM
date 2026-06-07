@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import * as LucideIcons from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard,
   Puzzle,
@@ -10,7 +12,6 @@ import {
   Sun,
   LogOut,
   User,
-  ChevronDown,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -57,21 +58,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import DashboardView from '@/components/views/dashboard-view';
 import PluginsView from '@/components/views/plugins-view';
 import AppStoreView from '@/components/views/app-store-view';
 import SettingsView from '@/components/views/settings-view';
+import CrmContactsView from '@/components/views/crm-contacts-view';
 
 // ============================================================
-// Nav Configuration
+// Types
 // ============================================================
 
 interface NavItem {
   id: string;
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }
 
 interface NavSection {
@@ -80,7 +81,32 @@ interface NavSection {
   items: NavItem[];
 }
 
-const navSections: NavSection[] = [
+interface UISidebarItemData {
+  id: string;
+  pluginId: string;
+  label: string;
+  icon?: string | null;
+  section?: string | null;
+  order?: number;
+  href?: string | null;
+  badge?: string | number | null;
+  permission?: string | null;
+}
+
+// ============================================================
+// Helper: resolve icon name string to Lucide component
+// ============================================================
+
+function getIconByName(name: string): LucideIcon {
+  const Icon = (LucideIcons as Record<string, LucideIcon>)[name];
+  return Icon || LucideIcons.Box;
+}
+
+// ============================================================
+// Core Nav (hardcoded base items)
+// ============================================================
+
+const coreNavSections: NavSection[] = [
   {
     id: 'core',
     label: 'Core',
@@ -107,6 +133,10 @@ function AppSidebar() {
   const { currentView, setCurrentView } = useAppStore();
   const { user } = useAuthStore();
 
+  // Dynamic sidebar items from UI Registry
+  const [dynamicSections, setDynamicSections] = useState<NavSection[]>([]);
+  const [uiLoading, setUiLoading] = useState(false);
+
   const initials = user
     ? `${(user.firstName?.[0] || '').toUpperCase()}${(user.lastName?.[0] || '').toUpperCase()}`
     : 'AU';
@@ -114,6 +144,78 @@ function AppSidebar() {
     ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
     : 'Admin User';
   const roleLabel = user?.roles?.[0] || 'Admin';
+
+  // Fetch UI extensions on mount
+  useEffect(() => {
+    const fetchUIExtensions = async () => {
+      setUiLoading(true);
+      try {
+        const res = await fetch('/api/ui-extensions');
+        if (res.ok) {
+          const data = await res.json();
+          const sidebarItems: UISidebarItemData[] = data.sidebar || [];
+
+          // Group sidebar items by section
+          const sectionMap = new Map<string, NavItem[]>();
+          for (const item of sidebarItems) {
+            const section = item.section || 'Plugins';
+            if (!sectionMap.has(section)) {
+              sectionMap.set(section, []);
+            }
+            sectionMap.get(section)!.push({
+              id: item.id,
+              label: item.label,
+              icon: item.icon ? getIconByName(item.icon) : LucideIcons.Box,
+            });
+          }
+
+          // Convert to NavSection array
+          const sections: NavSection[] = [];
+          for (const [sectionId, items] of sectionMap) {
+            sections.push({
+              id: sectionId.toLowerCase().replace(/\s+/g, '-'),
+              label: sectionId,
+              items: items.sort((a, b) => a.label.localeCompare(b.label)),
+            });
+          }
+
+          setDynamicSections(sections);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setUiLoading(false);
+      }
+    };
+
+    fetchUIExtensions();
+  }, []);
+
+  // Merge core sections with dynamic sections
+  const allSections = useMemo(() => {
+    if (dynamicSections.length === 0) return coreNavSections;
+    return coreNavSections;
+  }, [dynamicSections]);
+
+  // Check if there are dynamic CRM sections to show
+  const hasDynamicSections = dynamicSections.length > 0;
+
+  // All nav items for breadcrumb computation
+  const allNavItems = useMemo(() => {
+    const items: NavItem[] = [];
+    for (const s of allSections) {
+      for (const i of s.items) items.push(i);
+    }
+    for (const s of dynamicSections) {
+      for (const i of s.items) items.push(i);
+    }
+    return items;
+  }, [allSections, dynamicSections]);
+
+  const allNavSections = useMemo(() => {
+    if (!hasDynamicSections) return allSections;
+    return [...allSections, ...dynamicSections];
+  }, [allSections, dynamicSections, hasDynamicSections]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -134,7 +236,7 @@ function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {navSections.map((section) => (
+        {allNavSections.map((section) => (
           <React.Fragment key={section.id}>
             <SidebarGroup>
               <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
@@ -203,19 +305,24 @@ function Header() {
     : 'Admin User';
 
   const breadcrumbSegments = useMemo(() => {
-    const allItems = navSections.flatMap((s) => s.items);
-    const current = allItems.find((i) => i.id === currentView);
-    const section = navSections.find((s) =>
-      s.items.some((i) => i.id === currentView)
-    );
+    // Build a flat list of all sections + items
+    const allItems: { section: NavSection; item: NavItem }[] = [];
+    for (const s of coreNavSections) {
+      for (const i of s.items) {
+        allItems.push({ section: s, item: i });
+      }
+    }
 
-    if (!current) return [];
+    const current = allItems.find((x) => x.item.id === currentView);
+    if (!current) {
+      // Check dynamic sidebar items (stored in DOM or state)
+      // Fallback: just show the current view ID
+      return [{ label: currentView || 'Dashboard', id: currentView || 'dashboard' }];
+    }
 
     const segments = [];
-    if (section) {
-      segments.push({ label: section.label, id: section.id });
-    }
-    segments.push({ label: current.label, id: current.id });
+    segments.push({ label: current.section.label, id: current.section.id });
+    segments.push({ label: current.item.label, id: current.item.id });
     return segments;
   }, [currentView]);
 
@@ -332,6 +439,10 @@ function ViewSwitcher() {
     plugins: <PluginsView />,
     'app-store': <AppStoreView />,
     settings: <SettingsView />,
+    'crm-contacts': <CrmContactsView />,
+    'crm-companies': <CrmContactsView />,
+    'crm-deals': <CrmContactsView />,
+    'crm-tasks': <CrmContactsView />,
   };
 
   return (
