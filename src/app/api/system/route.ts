@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getToolRegistry } from '@/core/tool-registry';
+import { bootstrapPlatform } from '@/lib/bootstrap';
+import { seedDemoData } from '@/lib/seed';
 
 /**
  * GET /api/system
  * Returns system health, stats, and version information.
+ * Auto-seeds demo data on first call.
  */
 export async function GET() {
   try {
     const registry = getToolRegistry();
+
+    // Auto-seed and bootstrap on first call
+    await seedDemoData();
+    await bootstrapPlatform();
 
     const [pluginCount, activePluginCount, tenantCount, userCount, eventCount] =
       await Promise.all([
@@ -16,7 +23,7 @@ export async function GET() {
         db.installedPlugin.count({ where: { status: 'ACTIVE' } }),
         db.tenant.count(),
         db.user.count(),
-        db.eventLog.count(),
+    db.eventLog.count(),
       ]);
 
     return NextResponse.json({

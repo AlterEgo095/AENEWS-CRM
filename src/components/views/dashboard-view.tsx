@@ -165,6 +165,10 @@ export default function DashboardView() {
   // UI Extensions data
   const [uiExtensions, setUiExtensions] = useState<any>(null);
 
+  // Live dashboard card data from /api/dashboard
+  const [liveCardData, setLiveCardData] = useState<Record<string, { value: string; trend: string }>>({});
+  const [liveCardLoading, setLiveCardLoading] = useState(true);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -196,6 +200,25 @@ export default function DashboardView() {
         }
       } catch {
         // ignore
+      }
+    })();
+
+    // Fetch live dashboard card data from /api/dashboard
+    void (async () => {
+      try {
+        const res = await fetch('/api/dashboard');
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          const map: Record<string, { value: string; trend: string }> = {};
+          for (const card of data.cards || []) {
+            map[card.id] = { value: card.value, trend: card.trend };
+          }
+          setLiveCardData(map);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setLiveCardLoading(false);
       }
     })();
 
@@ -279,12 +302,21 @@ export default function DashboardView() {
     );
   }, [archData]);
 
-  // Dashboard cards from UI extensions
+  // Dashboard cards from UI extensions — enriched with live data
   const dashboardCards = React.useMemo(() => {
-    if (uiExtensions?.dashboardCards) return uiExtensions.dashboardCards as DashboardCardData[];
-    if (archData?.dashboardCards) return archData.dashboardCards;
-    return [];
-  }, [uiExtensions, archData]);
+    const baseCards: DashboardCardData[] = uiExtensions?.dashboardCards
+      || archData?.dashboardCards
+      || [];
+
+    // Merge live data into the cards
+    return baseCards.map((card) => {
+      const live = liveCardData[card.id];
+      if (live) {
+        return { ...card, value: live.value, trend: live.trend };
+      }
+      return card;
+    });
+  }, [uiExtensions, archData, liveCardData]);
 
   const activeEngines = archData
     ? archData.engines.filter((e) => e.status === 'active').length
@@ -326,12 +358,27 @@ export default function DashboardView() {
       {/* ═══════════════════════════════════════════════════════════
           SECTION 1 — Plugin Dashboard Cards
           ═══════════════════════════════════════════════════════════ */}
-      {dashboardCards.length > 0 && (
+      {(dashboardCards.length > 0 || liveCardLoading) && (
         <section aria-label="Dashboard Cards">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dashboardCards.slice(0, 3).map((card) => (
-              <DashboardCardWidget key={card.id} card={card} />
-            ))}
+            {liveCardLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Card key={`skeleton-${i}`} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 flex items-start gap-4">
+                    <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-7 w-16" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              dashboardCards.slice(0, 3).map((card) => (
+                <DashboardCardWidget key={card.id} card={card} />
+              ))
+            )}
           </div>
         </section>
       )}

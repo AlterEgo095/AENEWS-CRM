@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -12,6 +12,8 @@ import {
   Sun,
   LogOut,
   User,
+  Bell,
+  Bot,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -64,6 +66,7 @@ import PluginsView from '@/components/views/plugins-view';
 import AppStoreView from '@/components/views/app-store-view';
 import SettingsView from '@/components/views/settings-view';
 import CrmContactsView from '@/components/views/crm-contacts-view';
+import ChatView from '@/components/views/chat-view';
 
 // ============================================================
 // Types
@@ -112,6 +115,7 @@ const coreNavSections: NavSection[] = [
     label: 'Core',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'chat', label: 'AI Assistant', icon: Bot },
       { id: 'plugins', label: 'Plugins', icon: Puzzle },
       { id: 'app-store', label: 'App Store', icon: Store },
     ],
@@ -297,6 +301,37 @@ function Header() {
   const { setTheme, theme } = useTheme();
   const { user, logout } = useAuthStore();
 
+  // Notification state
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Poll unread notification count every 30 seconds
+  useEffect(() => {
+    if (!user?.id || !user?.tenantId) return;
+
+    const poll = () => {
+      fetch(
+        `/api/notifications?userId=${user.id}&tenantId=${user.tenantId}&countOnly=true`
+      )
+        .then((res) => {
+          if (res.ok) return res.json();
+        })
+        .then((data) => {
+          if (data) setUnreadCount(data.unread ?? 0);
+        })
+        .catch(() => {
+          // Silently ignore polling errors
+        });
+    };
+
+    // Fire immediately via setTimeout (avoids synchronous setState in effect)
+    const timeoutId = setTimeout(poll, 0);
+    const intervalId = setInterval(poll, 30_000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [user?.id, user?.tenantId]);
+
   const initials = user
     ? `${(user.firstName?.[0] || '').toUpperCase()}${(user.lastName?.[0] || '').toUpperCase()}`
     : 'AU';
@@ -358,6 +393,25 @@ function Header() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+
+      {/* Notification Bell */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative h-9 w-9"
+        onClick={() => setCurrentView('settings')}
+        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+      >
+        <Bell className="h-4 w-4" />
+        {unreadCount > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] font-bold leading-none flex items-center justify-center rounded-full"
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </Badge>
+        )}
+      </Button>
 
       <div className="flex items-center gap-2">
         <DropdownMenu>
@@ -436,6 +490,7 @@ function ViewSwitcher() {
 
   const viewMap: Record<string, React.ReactNode> = {
     dashboard: <DashboardView />,
+    chat: <ChatView />,
     plugins: <PluginsView />,
     'app-store': <AppStoreView />,
     settings: <SettingsView />,

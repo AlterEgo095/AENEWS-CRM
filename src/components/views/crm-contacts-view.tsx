@@ -22,7 +22,14 @@ import {
   FileCode,
   Layout,
   UserCircle,
+  Eye,
+  Pencil,
+  Trash2,
+  Save,
+  X,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +61,16 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 // ============================================================
 // Types
@@ -135,6 +152,7 @@ export default function CrmContactsView() {
   const [sortField, setSortField] = useState<string>('lastName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showNewContactDialog, setShowNewContactDialog] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch contacts from API
@@ -233,6 +251,94 @@ export default function CrmContactsView() {
     }
   };
 
+  // ─── Contact action handlers ───
+  const handleViewDetails = useCallback((contact: Contact) => {
+    toast.info(`${contact.firstName} ${contact.lastName}`, {
+      description: `${contact.title} at ${contact.company} · ${contact.email} · ${contact.phone || 'No phone'} · Source: ${contact.source} · Tags: ${contact.tags.join(', ') || 'None'}`,
+      duration: 5000,
+    });
+  }, []);
+
+  const handleEditContact = useCallback((contact: Contact) => {
+    setEditingContact(contact);
+  }, []);
+
+  const handleDeleteContact = useCallback(async (contact: Contact) => {
+    try {
+      const res = await fetch('/api/crm/contacts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: contact.id }),
+      });
+      if (res.ok) {
+        setContacts((prev) => prev.filter((c) => c.id !== contact.id));
+        toast.success(`${contact.firstName} ${contact.lastName} deleted`);
+      } else {
+        toast.error('Failed to delete contact');
+      }
+    } catch {
+      toast.error('Failed to delete contact');
+    }
+  }, []);
+
+  const handleSendEmail = useCallback((contact: Contact) => {
+    toast.info(`Email client would open for ${contact.email}`);
+  }, []);
+
+  const handleSaveContact = useCallback(async (updatedContact: Contact) => {
+    try {
+      const res = await fetch('/api/crm/contacts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: updatedContact.id,
+          firstName: updatedContact.firstName,
+          lastName: updatedContact.lastName,
+          email: updatedContact.email || undefined,
+          phone: updatedContact.phone || undefined,
+          company: updatedContact.company || undefined,
+          title: updatedContact.title || undefined,
+          status: updatedContact.status,
+          tags: updatedContact.tags,
+          notes: updatedContact.notes || undefined,
+          source: updatedContact.source,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const c = data.contact;
+        const saved: Contact = {
+          id: c.id,
+          firstName: c.firstName,
+          lastName: c.lastName,
+          email: c.email || '',
+          phone: c.phone || '',
+          company: c.company || '',
+          title: c.title || '',
+          status: c.status as Contact['status'],
+          tags: c.tags || [],
+          lastContactAt: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
+          source: c.source || 'Manual',
+          notes: c.notes || '',
+        };
+        setContacts((prev) => prev.map((ct) => (ct.id === saved.id ? saved : ct)));
+        setEditingContact(null);
+        toast.success(`${saved.firstName} ${saved.lastName} updated`);
+      } else {
+        toast.error('Failed to update contact');
+      }
+    } catch {
+      toast.error('Failed to update contact');
+    }
+  }, []);
+
+  const contactActions = useMemo(() => ({
+    onView: handleViewDetails,
+    onEdit: handleEditContact,
+    onDelete: handleDeleteContact,
+    onSendEmail: handleSendEmail,
+  }), [handleViewDetails, handleEditContact, handleDeleteContact, handleSendEmail]);
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* ─── Header ─── */}
@@ -325,19 +431,19 @@ export default function CrmContactsView() {
 
         {/* ─── All Tab Content ─── */}
         <TabsContent value="all" className="mt-0">
-          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort)}
+          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort, contactActions)}
         </TabsContent>
         <TabsContent value="active" className="mt-0">
-          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort)}
+          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort, contactActions)}
         </TabsContent>
         <TabsContent value="lead" className="mt-0">
-          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort)}
+          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort, contactActions)}
         </TabsContent>
         <TabsContent value="prospect" className="mt-0">
-          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort)}
+          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort, contactActions)}
         </TabsContent>
         <TabsContent value="customer" className="mt-0">
-          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort)}
+          {renderContacts(filteredContacts, viewMode, sortField, sortDirection, toggleSort, contactActions)}
         </TabsContent>
       </Tabs>
 
@@ -358,6 +464,15 @@ export default function CrmContactsView() {
             setShowNewContactDialog(false);
           }}
           onCancel={() => setShowNewContactDialog(false)}
+        />
+      )}
+
+      {/* ─── Edit Contact Dialog ─── */}
+      {editingContact && (
+        <EditContactDialog
+          contact={editingContact}
+          onSave={handleSaveContact}
+          onCancel={() => setEditingContact(null)}
         />
       )}
 
@@ -481,12 +596,20 @@ export default function CrmContactsView() {
 // Render contacts based on view mode
 // ============================================================
 
+interface ContactActions {
+  onView: (contact: Contact) => void;
+  onEdit: (contact: Contact) => void;
+  onDelete: (contact: Contact) => void;
+  onSendEmail: (contact: Contact) => void;
+}
+
 function renderContacts(
   contacts: Contact[],
   viewMode: 'table' | 'grid',
   sortField: string,
   sortDirection: string,
   toggleSort: (field: string) => void,
+  actions: ContactActions,
 ) {
   if (contacts.length === 0) {
     return (
@@ -506,7 +629,7 @@ function renderContacts(
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {contacts.map((contact) => (
-          <ContactCard key={contact.id} contact={contact} />
+          <ContactCard key={contact.id} contact={contact} actions={actions} />
         ))}
       </div>
     );
@@ -561,7 +684,7 @@ function renderContacts(
           </TableHeader>
           <TableBody>
             {contacts.map((contact) => (
-              <ContactTableRow key={contact.id} contact={contact} />
+              <ContactTableRow key={contact.id} contact={contact} actions={actions} />
             ))}
           </TableBody>
         </Table>
@@ -574,7 +697,7 @@ function renderContacts(
 // Contact Table Row
 // ============================================================
 
-function ContactTableRow({ contact }: { contact: Contact }) {
+function ContactTableRow({ contact, actions }: { contact: Contact; actions: ContactActions }) {
   const initials = `${contact.firstName[0]}${contact.lastName[0]}`;
 
   return (
@@ -630,11 +753,26 @@ function ContactTableRow({ contact }: { contact: Contact }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem>Edit Contact</DropdownMenuItem>
-            <DropdownMenuItem>Send Email</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => actions.onView(contact)}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => actions.onEdit(contact)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit Contact
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => actions.onSendEmail(contact)}>
+              <Mail className="h-4 w-4 mr-2" />
+              Send Email
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => actions.onDelete(contact)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
@@ -646,7 +784,7 @@ function ContactTableRow({ contact }: { contact: Contact }) {
 // Contact Card (grid view)
 // ============================================================
 
-function ContactCard({ contact }: { contact: Contact }) {
+function ContactCard({ contact, actions }: { contact: Contact; actions: ContactActions }) {
   const initials = `${contact.firstName[0]}${contact.lastName[0]}`;
 
   return (
@@ -715,14 +853,37 @@ function ContactCard({ contact }: { contact: Contact }) {
         {/* Actions */}
         <Separator className="my-3" />
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="flex-1 h-7 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-7 text-xs"
+            onClick={() => actions.onView(contact)}
+          >
             View
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs px-2"
+            onClick={() => actions.onEdit(contact)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs px-2"
+            onClick={() => actions.onSendEmail(contact)}
+          >
             <Mail className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs px-2">
-            <Phone className="h-3.5 w-3.5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs px-2"
+            onClick={() => actions.onDelete(contact)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardContent>
@@ -905,5 +1066,202 @@ function NewContactInline({
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================================
+// Edit Contact Dialog
+// ============================================================
+
+function EditContactDialog({
+  contact,
+  onSave,
+  onCancel,
+}: {
+  contact: Contact;
+  onSave: (contact: Contact) => void;
+  onCancel: () => void;
+}) {
+  const [firstName, setFirstName] = useState(contact.firstName);
+  const [lastName, setLastName] = useState(contact.lastName);
+  const [email, setEmail] = useState(contact.email);
+  const [phone, setPhone] = useState(contact.phone);
+  const [company, setCompany] = useState(contact.company);
+  const [title, setTitle] = useState(contact.title);
+  const [status, setStatus] = useState<string>(contact.status);
+  const [tagsInput, setTagsInput] = useState(contact.tags.join(', '));
+  const [notes, setNotes] = useState(contact.notes);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim()) return;
+
+    setSubmitting(true);
+    const tags = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const updated: Contact = {
+      ...contact,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      company: company.trim(),
+      title: title.trim(),
+      status: status as Contact['status'],
+      tags,
+      notes: notes.trim(),
+    };
+
+    await onSave(updated);
+    setSubmitting(false);
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="h-5 w-5 text-emerald-500" />
+            Edit Contact
+          </DialogTitle>
+          <DialogDescription>
+            Update {contact.firstName} {contact.lastName}&apos;s information
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {/* Name row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-firstName">First Name *</Label>
+              <Input
+                id="edit-firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="John"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-lastName">Last Name *</Label>
+              <Input
+                id="edit-lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Smith"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Contact row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="john@example.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 (555) 000-0000"
+              />
+            </div>
+          </div>
+
+          {/* Company / Title row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-company">Company</Label>
+              <Input
+                id="edit-company"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="Acme Corp"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="VP of Engineering"
+              />
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-status">Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger id="edit-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lead">Lead</SelectItem>
+                <SelectItem value="prospect">Prospect</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="customer">Customer</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-tags">Tags</Label>
+            <Input
+              id="edit-tags"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="vip, partner, enterprise (comma-separated)"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Separate tags with commas
+            </p>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-notes">Notes</Label>
+            <Textarea
+              id="edit-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add notes about this contact..."
+              rows={3}
+            />
+          </div>
+
+          {/* Footer */}
+          <DialogFooter className="pt-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!firstName.trim() || !lastName.trim() || submitting}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {submitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

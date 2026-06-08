@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenantId');
     const userId = searchParams.get('userId');
     const isReadParam = searchParams.get('isRead');
+    const countOnly = searchParams.get('countOnly') === 'true';
     const limit = Math.min(Number(searchParams.get('limit')) || 50, 200);
     const offset = Number(searchParams.get('offset')) || 0;
 
@@ -31,6 +32,14 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = { tenantId };
     if (userId) where.userId = userId;
     if (isReadParam !== null) where.isRead = isReadParam === 'true';
+
+    // countOnly mode: lightweight endpoint for badge polling
+    if (countOnly) {
+      const unread = await db.notification.count({
+        where: { ...where, isRead: false },
+      });
+      return Response.json({ unread });
+    }
 
     const [notifications, total, unreadCount] = await Promise.all([
       db.notification.findMany({
@@ -70,6 +79,44 @@ export async function GET(request: NextRequest) {
     console.error('[GET /api/notifications] Error:', error);
     return Response.json(
       { error: 'Failed to fetch notifications' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/notifications
+ * Mark all notifications as read for a user/tenant.
+ * Body: { tenantId, userId }
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { tenantId, userId } = body;
+
+    if (!tenantId) {
+      return Response.json(
+        { error: 'tenantId is required' },
+        { status: 400 }
+      );
+    }
+
+    const where: Record<string, unknown> = { tenantId, isRead: false };
+    if (userId) where.userId = userId;
+
+    const result = await db.notification.updateMany({
+      where,
+      data: { isRead: true },
+    });
+
+    return Response.json({
+      message: `${result.count} notification(s) marked as read`,
+      count: result.count,
+    });
+  } catch (error) {
+    console.error('[PATCH /api/notifications] Error:', error);
+    return Response.json(
+      { error: 'Failed to mark notifications as read' },
       { status: 500 }
     );
   }
