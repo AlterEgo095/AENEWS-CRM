@@ -1,0 +1,505 @@
+{
+  "aenews": "1",
+  "id": "aenews-satellite",
+  "name": "Satellite Management",
+  "slug": "satellite",
+  "version": "1.0.0",
+  "description": "End-to-end satellite operations management — track orbital paths, monitor real-time telemetry, plan and execute missions, manage launch schedules, and coordinate docking at ground and space stations.",
+  "author": "AENEWS Auto-Generator",
+  "license": "MIT",
+  "coreVersion": "0.1.0",
+  "dependencies": [],
+  "capabilities": [
+    {
+      "type": "object",
+      "name": "manageOrbit",
+      "description": "Full lifecycle management for Orbit objects including CRUD, trajectory calculations, and orbital mechanics"
+    },
+    {
+      "type": "object",
+      "name": "manageTelemetry",
+      "description": "Full lifecycle management for Telemetry objects including CRUD, data ingestion, and signal processing"
+    },
+    {
+      "type": "object",
+      "name": "manageMission",
+      "description": "Full lifecycle management for Mission objects including CRUD, planning phases, and milestone tracking"
+    },
+    {
+      "type": "object",
+      "name": "manageLaunch",
+      "description": "Full lifecycle management for Launch objects including CRUD, countdown sequences, and flight profiles"
+    },
+    {
+      "type": "object",
+      "name": "manageStation",
+      "description": "Full lifecycle management for Station objects including CRUD, module tracking, and crew assignments"
+    },
+    {
+      "type": "search",
+      "name": "searchOrbits",
+      "description": "Search and filter orbit records by altitude, inclination, period, satellite assignment, or status"
+    },
+    {
+      "type": "search",
+      "name": "searchTelemetry",
+      "description": "Search and filter telemetry data streams by satellite, timestamp range, metric type, or anomaly flag"
+    },
+    {
+      "type": "search",
+      "name": "searchMissions",
+      "description": "Search and filter missions by name, status, assigned crew, launch window, or objective type"
+    },
+    {
+      "type": "search",
+      "name": "searchLaunches",
+      "description": "Search and filter launches by vehicle, pad, target orbit, window, or weather constraint"
+    },
+    {
+      "type": "search",
+      "name": "searchStations",
+      "description": "Search and filter stations by type, location, crew capacity, docking ports, or operational status"
+    },
+    {
+      "type": "create",
+      "name": "createOrbit",
+      "description": "Register a new orbital path with Keplerian elements and propagation parameters"
+    },
+    {
+      "type": "create",
+      "name": "createTelemetry",
+      "description": "Ingest a new telemetry data point from satellite downlink streams"
+    },
+    {
+      "type": "create",
+      "name": "createMission",
+      "description": "Plan and register a new mission with objectives, timeline, and resource allocation"
+    },
+    {
+      "type": "create",
+      "name": "createLaunch",
+      "description": "Schedule a new launch event with vehicle configuration, trajectory, and countdown"
+    },
+    {
+      "type": "create",
+      "name": "createStation",
+      "description": "Register a new station facility with modules, ports, and crew complement"
+    },
+    {
+      "type": "read",
+      "name": "getOrbit",
+      "description": "Retrieve orbit details by ID with full Keplerian elements and TLE data"
+    },
+    {
+      "type": "read",
+      "name": "getTelemetry",
+      "description": "Retrieve telemetry record by ID with full sensor readings and quality metrics"
+    },
+    {
+      "type": "read",
+      "name": "getMission",
+      "description": "Retrieve mission details by ID with full timeline, crew manifest, and objectives"
+    },
+    {
+      "type": "read",
+      "name": "getLaunch",
+      "description": "Retrieve launch details by ID with vehicle specs, trajectory data, and status"
+    },
+    {
+      "type": "read",
+      "name": "getStation",
+      "description": "Retrieve station details by ID with module layout, crew roster, and docking schedule"
+    },
+    {
+      "type": "update",
+      "name": "updateOrbit",
+      "description": "Update orbital parameters, apply station-keeping maneuvers, or adjust trajectory"
+    },
+    {
+      "type": "update",
+      "name": "updateTelemetry",
+      "description": "Update telemetry records with post-processing corrections or quality flags"
+    },
+    {
+      "type": "update",
+      "name": "updateMission",
+      "description": "Modify mission plan, reassign objectives, update timeline milestones, or change crew"
+    },
+    {
+      "type": "update",
+      "name": "updateLaunch",
+      "description": "Update launch parameters, revise countdown, change vehicle config, or adjust window"
+    },
+    {
+      "type": "update",
+      "name": "updateStation",
+      "description": "Update station configuration, add modules, modify crew, or change operational status"
+    },
+    {
+      "type": "delete",
+      "name": "deleteOrbit",
+      "description": "Decommission or remove an orbital registration with deorbit burn calculation"
+    },
+    {
+      "type": "delete",
+      "name": "deleteTelemetry",
+      "description": "Purge old telemetry records beyond retention policy with archive option"
+    },
+    {
+      "type": "delete",
+      "name": "deleteMission",
+      "description": "Cancel or archive a mission with rollback of resource allocations"
+    },
+    {
+      "type": "delete",
+      "name": "deleteLaunch",
+      "description": "Scratch a launch event and release pad, vehicle, and range resources"
+    },
+    {
+      "type": "delete",
+      "name": "deleteStation",
+      "description": "Decommission a station with full shutdown procedure and debris tracking"
+    },
+    {
+      "type": "tool",
+      "name": "calculateOrbitalTransfer",
+      "description": "Compute delta-V and burn schedule for orbital transfer maneuvers between two orbits"
+    }
+  ],
+  "entry": {
+    "server": "./src/index.ts"
+  },
+  "menus": [
+    {
+      "id": "satellite-menu-parent",
+      "label": "Satellite Management",
+      "icon": "Satellite",
+      "href": "plugin:satellite:dashboard",
+      "section": "PLUGINS",
+      "order": 10
+    },
+    {
+      "id": "satellite-menu-orbits",
+      "label": "Orbits",
+      "icon": "Circle",
+      "href": "plugin:satellite:orbits",
+      "section": "PLUGINS",
+      "order": 20,
+      "parentId": "satellite-menu-parent"
+    },
+    {
+      "id": "satellite-menu-telemetry",
+      "label": "Telemetry",
+      "icon": "Activity",
+      "href": "plugin:satellite:telemetry",
+      "section": "PLUGINS",
+      "order": 30,
+      "parentId": "satellite-menu-parent"
+    },
+    {
+      "id": "satellite-menu-missions",
+      "label": "Missions",
+      "icon": "Target",
+      "href": "plugin:satellite:missions",
+      "section": "PLUGINS",
+      "order": 40,
+      "parentId": "satellite-menu-parent"
+    },
+    {
+      "id": "satellite-menu-launches",
+      "label": "Launches",
+      "icon": "Rocket",
+      "href": "plugin:satellite:launches",
+      "section": "PLUGINS",
+      "order": 50,
+      "parentId": "satellite-menu-parent"
+    },
+    {
+      "id": "satellite-menu-stations",
+      "label": "Stations",
+      "icon": "Building",
+      "href": "plugin:satellite:stations",
+      "section": "PLUGINS",
+      "order": 60,
+      "parentId": "satellite-menu-parent"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "satellite.orbit.read",
+      "name": "Orbit Read",
+      "description": "View orbit registrations, Keplerian elements, and TLE data",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.orbit.write",
+      "name": "Orbit Write",
+      "description": "Create and update orbit registrations, apply maneuvers, adjust trajectories",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.orbit.delete",
+      "name": "Orbit Delete",
+      "description": "Decommission orbit registrations and schedule deorbit burns",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.telemetry.read",
+      "name": "Telemetry Read",
+      "description": "View telemetry data streams, sensor readings, and quality reports",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.telemetry.write",
+      "name": "Telemetry Write",
+      "description": "Ingest new telemetry data, apply corrections, and set quality flags",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.telemetry.delete",
+      "name": "Telemetry Delete",
+      "description": "Purge telemetry records beyond retention and manage archive policies",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.mission.read",
+      "name": "Mission Read",
+      "description": "View mission plans, timelines, crew manifests, and objectives",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.mission.write",
+      "name": "Mission Write",
+      "description": "Create and update missions, assign crew, set objectives and milestones",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.mission.delete",
+      "name": "Mission Delete",
+      "description": "Cancel or archive missions with resource rollback",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.launch.read",
+      "name": "Launch Read",
+      "description": "View launch schedules, vehicle configurations, and flight profiles",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.launch.write",
+      "name": "Launch Write",
+      "description": "Schedule and update launches, configure vehicles, and set countdown parameters",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.launch.delete",
+      "name": "Launch Delete",
+      "description": "Scratch launches and release pad and vehicle resources",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.station.read",
+      "name": "Station Read",
+      "description": "View station configurations, module layouts, and crew rosters",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.station.write",
+      "name": "Station Write",
+      "description": "Create and update stations, add modules, manage docking ports and crew",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.station.delete",
+      "name": "Station Delete",
+      "description": "Decommission stations with full shutdown procedures and debris tracking",
+      "category": "satellite"
+    },
+    {
+      "id": "satellite.admin",
+      "name": "Satellite Admin",
+      "description": "Full administration of all satellite management features including settings, users, and integrations",
+      "category": "satellite"
+    }
+  ],
+  "settings": [
+    {
+      "key": "satellite.default_tracking_interval",
+      "type": "number",
+      "label": "Default Tracking Interval (seconds)",
+      "description": "Interval between automatic orbital position updates for all tracked satellites",
+      "defaultValue": 60,
+      "scope": "tenant"
+    },
+    {
+      "key": "satellite.alert_threshold",
+      "type": "number",
+      "label": "Telemetry Alert Threshold (%)",
+      "description": "Deviation percentage from nominal values that triggers a telemetry alert notification",
+      "defaultValue": 15,
+      "scope": "tenant"
+    },
+    {
+      "key": "satellite.auto_log_telemetry",
+      "type": "boolean",
+      "label": "Auto-Log Telemetry",
+      "description": "Automatically log all incoming telemetry data to persistent storage without manual approval",
+      "defaultValue": true,
+      "scope": "tenant"
+    },
+    {
+      "key": "satellite.max_missions",
+      "type": "number",
+      "label": "Maximum Active Missions",
+      "description": "Upper limit on the number of concurrently active missions allowed per tenant",
+      "defaultValue": 50,
+      "scope": "tenant"
+    }
+  ],
+  "events": [
+    {
+      "type": "orbit.created",
+      "description": "A new orbit registration has been created with full Keplerian elements and propagation model"
+    },
+    {
+      "type": "telemetry.received",
+      "description": "New telemetry data has been received from a satellite downlink and ingested into the system"
+    },
+    {
+      "type": "mission.started",
+      "description": "A mission has transitioned to active status and crew have begun executing the mission plan"
+    },
+    {
+      "type": "launch.executed",
+      "description": "A launch has been initiated with liftoff confirmed and vehicle is on its planned trajectory"
+    },
+    {
+      "type": "station.docked",
+      "description": "A spacecraft has completed docking procedures with a station and hard-mate is confirmed"
+    }
+  ],
+  "search": {
+    "entities": [
+      {
+        "name": "orbits",
+        "table": "satellite_orbits",
+        "fields": [
+          "id",
+          "satellite_id",
+          "semi_major_axis_km",
+          "eccentricity",
+          "inclination_deg",
+          "raan_deg",
+          "arg_perigee_deg",
+          "mean_anomaly_deg",
+          "period_min",
+          "status"
+        ],
+        "labelField": "satellite_id"
+      },
+      {
+        "name": "telemetry",
+        "table": "satellite_telemetry",
+        "fields": [
+          "id",
+          "satellite_id",
+          "timestamp",
+          "battery_voltage",
+          "solar_panel_power",
+          "temperature_c",
+          "signal_strength_dbm",
+          "attitude_roll",
+          "anomaly_flag"
+        ],
+        "labelField": "satellite_id"
+      },
+      {
+        "name": "missions",
+        "table": "satellite_missions",
+        "fields": [
+          "id",
+          "mission_name",
+          "objective_type",
+          "status",
+          "crew_count",
+          "launch_window_start",
+          "estimated_duration_days",
+          "priority",
+          "budget_usd",
+          "lead_commander"
+        ],
+        "labelField": "mission_name"
+      },
+      {
+        "name": "launches",
+        "table": "satellite_launches",
+        "fields": [
+          "id",
+          "vehicle_name",
+          "pad_id",
+          "target_orbit_id",
+          "window_open",
+          "window_close",
+          "payload_mass_kg",
+          "status",
+          "weather_constraint",
+          "flight_profile"
+        ],
+        "labelField": "vehicle_name"
+      },
+      {
+        "name": "stations",
+        "table": "satellite_stations",
+        "fields": [
+          "id",
+          "station_name",
+          "station_type",
+          "location",
+          "crew_capacity",
+          "current_crew",
+          "docking_ports",
+          "modules_count",
+          "operational_status",
+          "commissioned_date"
+        ],
+        "labelField": "station_name"
+      }
+    ]
+  },
+  "agent": {
+    "id": "satellite-discovery-agent",
+    "name": "Satellite Discovery Agent",
+    "description": "Auto-derived agent from the discovery engine that analyzes satellite plugin data to provide intelligent insights, anomaly detection recommendations, and operational summaries across orbits, telemetry, missions, launches, and stations.",
+    "source": "discovery-engine",
+    "capabilities": [
+      "satellite.orbit.read",
+      "satellite.telemetry.read",
+      "satellite.mission.read",
+      "satellite.launch.read",
+      "satellite.station.read"
+    ]
+  },
+  "knowledge": [
+    {
+      "id": "satellite-overview",
+      "title": "Satellite Management Overview",
+      "type": "overview",
+      "source": "discovery-engine",
+      "content": "The Satellite Management plugin provides comprehensive end-to-end oversight of orbital operations within the AENEWS platform. It manages five core domains: Orbits (orbital tracking with Keplerian elements and propagation), Telemetry (real-time sensor data ingestion and monitoring), Missions (mission planning, crew management, and execution tracking), Launches (launch scheduling, vehicle configuration, and flight profiles), and Stations (ground and space station management with module tracking and docking coordination). Together these domains enable full situational awareness of all satellite assets and operations."
+    },
+    {
+      "id": "satellite-faq",
+      "title": "Satellite Management FAQ",
+      "type": "faq",
+      "source": "discovery-engine",
+      "content": "Q: How do I track a new satellite orbit? A: Navigate to Orbits and click Create — provide the satellite ID and Keplerian elements. Q: What triggers telemetry alerts? A: When any sensor reading deviates beyond the alert_threshold setting percentage from nominal. Q: Can I run multiple missions simultaneously? A: Yes, up to max_missions concurrent active missions per tenant. Q: How are launches linked to orbits? A: Each launch specifies a target_orbit_id that the vehicle will inject into. Q: What happens at station docking? A: The station.docked event fires, crew counts update, and docking port status changes."
+    },
+    {
+      "id": "satellite-policy",
+      "title": "Satellite Operations Policy",
+      "type": "policy",
+      "source": "discovery-engine",
+      "content": "All satellite operations follow these operational policies: (1) Orbit data must be refreshed at the configured default_tracking_interval. (2) Telemetry ingestion is governed by the auto_log_telemetry setting — when enabled, all data is automatically persisted. (3) Anomaly detection uses the alert_threshold percentage to flag deviations. (4) Mission creation requires at minimum a mission name, objective type, and assigned commander. (5) Launch operations require a valid vehicle, pad assignment, and open launch window. (6) Station decommissioning triggers debris tracking procedures. (7) Admin-level permission (satellite.admin) is required for system-wide configuration changes."
+    }
+  ]
+}

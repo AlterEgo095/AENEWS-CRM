@@ -1,0 +1,402 @@
+{
+  "aenews": "1",
+  "id": "aenews-test-013",
+  "name": "Test Plugin 013",
+  "slug": "test-013",
+  "version": "1.0.0",
+  "description": "Automated test plugin #013 for AENEWS scalability testing. Validates plugin engine behavior under mass load conditions.",
+  "author": "AENEWS Auto-Generator",
+  "license": "MIT",
+  "coreVersion": "0.1.0",
+  "dependencies": [],
+  "capabilities": [
+    {
+      "type": "object",
+      "name": "manageRecord",
+      "description": "Full lifecycle management for Record objects including CRUD and workflows"
+    },
+    {
+      "type": "search",
+      "name": "searchItems",
+      "description": "Search and filter Item records by multiple criteria with pagination"
+    },
+    {
+      "type": "create",
+      "name": "createAsset",
+      "description": "Create new Asset records with validation and auto-generated fields"
+    },
+    {
+      "type": "read",
+      "name": "getEntry",
+      "description": "Retrieve Entry details by ID with full metadata and relationships"
+    },
+    {
+      "type": "update",
+      "name": "updateResource",
+      "description": "Modify existing Resource records with change tracking"
+    },
+    {
+      "type": "delete",
+      "name": "deleteDocument",
+      "description": "Remove Document records with soft-delete and archival support"
+    },
+    {
+      "type": "tool",
+      "name": "processContractBatch",
+      "description": "Execute batch processing operations on Contract collections"
+    },
+    {
+      "type": "view",
+      "name": "viewTicketDashboard",
+      "description": "Dedicated view component for rendering Ticket data and actions"
+    },
+    {
+      "type": "dashboard",
+      "name": "projectOverview",
+      "description": "Analytics dashboard showing Project KPIs and trends"
+    },
+    {
+      "type": "widget",
+      "name": "taskWidget",
+      "description": "Compact widget displaying Task summary for portal embedding"
+    }
+  ],
+  "entry": {
+    "server": "./src/index.ts"
+  },
+  "permissions": [
+    {
+      "id": "test013.record.read",
+      "name": "Record Read",
+      "description": "Read permission for record entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.item.create",
+      "name": "Item Create",
+      "description": "Create permission for item entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.asset.update",
+      "name": "Asset Update",
+      "description": "Update permission for asset entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.entry.delete",
+      "name": "Entry Delete",
+      "description": "Delete permission for entry entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.resource.admin",
+      "name": "Resource Admin",
+      "description": "Admin permission for resource entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.document.read",
+      "name": "Document Read",
+      "description": "Read permission for document entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.contract.create",
+      "name": "Contract Create",
+      "description": "Create permission for contract entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.ticket.update",
+      "name": "Ticket Update",
+      "description": "Update permission for ticket entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.project.delete",
+      "name": "Project Delete",
+      "description": "Delete permission for project entities in test plugin 013",
+      "category": "test-013"
+    },
+    {
+      "id": "test013.task.admin",
+      "name": "Task Admin",
+      "description": "Admin permission for task entities in test plugin 013",
+      "category": "test-013"
+    }
+  ],
+  "settings": [
+    {
+      "key": "test-013.max_items_per_page",
+      "type": "number",
+      "label": "Max Items Per Page",
+      "defaultValue": 25,
+      "scope": "tenant"
+    },
+    {
+      "key": "test-013.enable_notifications",
+      "type": "boolean",
+      "label": "Enable Notifications",
+      "defaultValue": true,
+      "scope": "tenant"
+    },
+    {
+      "key": "test-013.default_sort_field",
+      "type": "string",
+      "label": "Default Sort Field",
+      "defaultValue": "created_at",
+      "scope": "tenant"
+    },
+    {
+      "key": "test-013.archive_after_days",
+      "type": "number",
+      "label": "Archive After Days",
+      "defaultValue": 90,
+      "scope": "tenant"
+    },
+    {
+      "key": "test-013.export_format",
+      "type": "select",
+      "label": "Export Format",
+      "defaultValue": "json",
+      "options": [
+        {
+          "label": "JSON",
+          "value": "json"
+        },
+        {
+          "label": "CSV",
+          "value": "csv"
+        },
+        {
+          "label": "XML",
+          "value": "xml"
+        }
+      ],
+      "scope": "tenant"
+    }
+  ],
+  "menus": [
+    {
+      "id": "test-013-menu-parent",
+      "label": "Test Plugin 013",
+      "icon": "Box",
+      "href": "plugin:test-013:overview",
+      "section": "PLUGINS",
+      "order": 10
+    },
+    {
+      "id": "test-013-menu-1",
+      "label": "Test Plugin 013 Records",
+      "icon": "Package",
+      "href": "plugin:test-013:records",
+      "section": "PLUGINS",
+      "order": 20,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-2",
+      "label": "Test Plugin 013 Reports",
+      "icon": "FileText",
+      "href": "plugin:test-013:reports",
+      "section": "PLUGINS",
+      "order": 30,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-3",
+      "label": "Test Plugin 013 Settings",
+      "icon": "Database",
+      "href": "plugin:test-013:settings",
+      "section": "PLUGINS",
+      "order": 40,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-4",
+      "label": "Test Plugin 013 Analytics",
+      "icon": "Layers",
+      "href": "plugin:test-013:analytics",
+      "section": "PLUGINS",
+      "order": 50,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-5",
+      "label": "Test Plugin 013 Integrations",
+      "icon": "Archive",
+      "href": "plugin:test-013:integrations",
+      "section": "PLUGINS",
+      "order": 60,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-6",
+      "label": "Test Plugin 013 Team",
+      "icon": "Clipboard",
+      "href": "plugin:test-013:team",
+      "section": "PLUGINS",
+      "order": 70,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-7",
+      "label": "Test Plugin 013 Calendar",
+      "icon": "Tag",
+      "href": "plugin:test-013:calendar",
+      "section": "PLUGINS",
+      "order": 80,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-8",
+      "label": "Test Plugin 013 Audit Log",
+      "icon": "Briefcase",
+      "href": "plugin:test-013:audit-log",
+      "section": "PLUGINS",
+      "order": 90,
+      "parentId": "test-013-menu-parent"
+    },
+    {
+      "id": "test-013-menu-9",
+      "label": "Test Plugin 013 Workflow",
+      "icon": "List",
+      "href": "plugin:test-013:workflow",
+      "section": "PLUGINS",
+      "order": 100,
+      "parentId": "test-013-menu-parent"
+    }
+  ],
+  "events": [
+    {
+      "type": "test-013.record.created",
+      "description": "Fires when a record is creatd in test plugin 013"
+    },
+    {
+      "type": "test-013.item.updated",
+      "description": "Fires when a item is updatd in test plugin 013"
+    },
+    {
+      "type": "test-013.asset.deleted",
+      "description": "Fires when a asset is deletd in test plugin 013"
+    },
+    {
+      "type": "test-013.entry.archived",
+      "description": "Fires when a entry is archivd in test plugin 013"
+    },
+    {
+      "type": "test-013.resource.restored",
+      "description": "Fires when a resource is restord in test plugin 013"
+    },
+    {
+      "type": "test-013.document.approved",
+      "description": "Fires when a document is approvd in test plugin 013"
+    },
+    {
+      "type": "test-013.contract.rejected",
+      "description": "Fires when a contract is rejectd in test plugin 013"
+    },
+    {
+      "type": "test-013.ticket.assigned",
+      "description": "Fires when a ticket is assignd in test plugin 013"
+    },
+    {
+      "type": "test-013.project.completed",
+      "description": "Fires when a project is completd in test plugin 013"
+    },
+    {
+      "type": "test-013.task.exported",
+      "description": "Fires when a task is exportd in test plugin 013"
+    }
+  ],
+  "search": {
+    "entities": [
+      {
+        "name": "orders",
+        "table": "test-013_orders",
+        "fields": [
+          "id",
+          "reference_number",
+          "customer_name",
+          "total_amount",
+          "status",
+          "created_at",
+          "updated_at",
+          "due_date",
+          "notes",
+          "priority"
+        ],
+        "labelField": "reference_number"
+      },
+      {
+        "name": "invoices",
+        "table": "test-013_invoices",
+        "fields": [
+          "id",
+          "invoice_number",
+          "amount",
+          "currency",
+          "paid_status",
+          "issued_date",
+          "due_date",
+          "vendor",
+          "category",
+          "description"
+        ],
+        "labelField": "invoice_number"
+      },
+      {
+        "name": "shipments",
+        "table": "test-013_shipments",
+        "fields": [
+          "id",
+          "tracking_code",
+          "origin",
+          "destination",
+          "carrier",
+          "weight",
+          "shipped_date",
+          "delivered_date",
+          "status",
+          "recipient"
+        ],
+        "labelField": "tracking_code"
+      },
+      {
+        "name": "customers",
+        "table": "test-013_customers",
+        "fields": [
+          "id",
+          "full_name",
+          "email",
+          "phone",
+          "company",
+          "city",
+          "country",
+          "registration_date",
+          "tier",
+          "active"
+        ],
+        "labelField": "full_name"
+      },
+      {
+        "name": "products",
+        "table": "test-013_products",
+        "fields": [
+          "id",
+          "sku",
+          "product_name",
+          "category",
+          "price",
+          "stock_quantity",
+          "supplier",
+          "weight_kg",
+          "description",
+          "tags"
+        ],
+        "labelField": "sku"
+      }
+    ]
+  }
+}
