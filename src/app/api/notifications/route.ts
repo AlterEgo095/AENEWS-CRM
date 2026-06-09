@@ -1,4 +1,4 @@
-import { NextRequest, Response } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { eventBus, EVENT_TYPES } from '@/lib/event-bus';
 

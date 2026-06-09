@@ -41,22 +41,23 @@ export default function PluginsView() {
   const setPluginsLoading = useAppStore((s) => s.setPluginsLoading);
   const { user } = useAuthStore();
 
-  useEffect(() => {
-    const fetchPlugins = async () => {
-      if (!user?.tenantId) return;
-      setPluginsLoading(true);
-      try {
-        const res = await fetch(`/api/plugins?tenantId=${user.tenantId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPlugins(data.plugins);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setPluginsLoading(false);
+  const fetchPlugins = async () => {
+    if (!user?.tenantId) return;
+    setPluginsLoading(true);
+    try {
+      const res = await fetch(`/api/plugins?tenantId=${user.tenantId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPlugins(data.plugins);
       }
-    };
+    } catch {
+      // ignore
+    } finally {
+      setPluginsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPlugins();
   }, [user?.tenantId, setPlugins, setPluginsLoading]);
 
