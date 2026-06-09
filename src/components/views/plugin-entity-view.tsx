@@ -142,6 +142,7 @@ export default function PluginEntityView({
   }, [pluginSlug, entityName]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

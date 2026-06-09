@@ -271,6 +271,7 @@ export default function ValidationSuiteView() {
 
   // Auto-run on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     runValidation();
   }, [runValidation]);
 
@@ -353,7 +354,7 @@ export default function ValidationSuiteView() {
       {error && (
         <Card className="border-rose-300 bg-rose-50 dark:bg-rose-900/10">
           <CardContent className="p-4 flex items-center gap-3">
-            <XCircle className="h-5 w-5 text-rose-600" shrink-0" />
+            <XCircle className="h-5 w-5 text-rose-600 shrink-0" />
             <div>
               <p className="text-sm font-medium text-rose-800 dark:text-rose-200">
                 Validation Error

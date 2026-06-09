@@ -242,8 +242,8 @@ export default function PluginView({ pluginSlug }: { pluginSlug: string }) {
 
   // Initial load + refetch when entity type changes
   useEffect(() => {
-    fetchPluginData();
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPluginData();
   }, [fetchPluginData]);
 
   // Parse entity types
@@ -255,7 +255,7 @@ export default function PluginView({ pluginSlug }: { pluginSlug: string }) {
       }
       return { name: et as string, icon: 'Box' };
     });
-  }, [pluginData?.entityTypes]);
+  }, [pluginData.entityTypes]);
 
   // Filtered & sorted entities
   const displayEntities = useMemo(() => {
