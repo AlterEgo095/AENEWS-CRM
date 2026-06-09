@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.justice",
+  "name": "Justice & Court Management",
+  "slug": "justice",
+  "version": "1.0.0",
+  "description": "Complete court and justice system management — manage legal cases, track lawyers, schedule hearings, and record verdicts with full case timelines and document tracking.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchCases", "description": "Search for legal cases by number, type, or status" },
+    { "type": "create", "name": "createHearing", "description": "Schedule a new court hearing for a case" },
+    { "type": "read", "name": "getLawyer", "description": "Get lawyer profile with active cases and specialization" },
+    { "type": "update", "name": "updateVerdict", "description": "Record or update a case verdict" },
+    { "type": "delete", "name": "deleteHearing", "description": "Cancel or delete a scheduled hearing" },
+    { "type": "read", "name": "getCase", "description": "Get case details with full timeline and parties" },
+    { "type": "search", "name": "searchLawyers", "description": "Search lawyers by name, specialization, or bar number" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "justice-dashboard", "label": "Justice & Court", "icon": "Scale", "href": "plugin:justice:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "justice-cases", "label": "Cases", "icon": "Scale", "href": "plugin:justice:cases", "section": "PLUGINS", "order": 20, "parentId": "justice-dashboard" },
+    { "id": "justice-lawyers", "label": "Lawyers", "icon": "Gavel", "href": "plugin:justice:lawyers", "section": "PLUGINS", "order": 30, "parentId": "justice-dashboard" },
+    { "id": "justice-hearings", "label": "Hearings", "icon": "CalendarDays", "href": "plugin:justice:hearings", "section": "PLUGINS", "order": 40, "parentId": "justice-dashboard" },
+    { "id": "justice-verdicts", "label": "Verdicts", "icon": "BookMarked", "href": "plugin:justice:verdicts", "section": "PLUGINS", "order": 50, "parentId": "justice-dashboard" }
+  ],
+  "permissions": [
+    { "id": "justice.read", "name": "Read", "description": "Read justice data including cases, lawyers, and hearings" },
+    { "id": "justice.write", "name": "Write", "description": "Create/Update cases, lawyers, hearings, and verdicts" },
+    { "id": "justice.delete", "name": "Delete", "description": "Delete cases, hearing records, and verdict documents" },
+    { "id": "justice.admin", "name": "Admin", "description": "Full justice administration including court settings and access control" }
+  ],
+  "settings": [
+    { "key": "justice.name", "type": "string", "label": "Court Name", "defaultValue": "My Court" },
+    { "key": "justice.jurisdiction", "type": "string", "label": "Jurisdiction", "defaultValue": "" },
+    { "key": "justice.casePrefix", "type": "string", "label": "Case Number Prefix", "defaultValue": "CRT" },
+    { "key": "justice.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "justice.hearingDuration", "type": "number", "label": "Default Hearing Duration (min)", "defaultValue": 60 }
+  ],
+  "events": [
+    { "type": "justice.cases.created", "description": "New legal case filed" },
+    { "type": "justice.cases.updated", "description": "Case details or status updated" },
+    { "type": "justice.lawyers.created", "description": "New lawyer registered" },
+    { "type": "justice.hearings.created", "description": "New hearing scheduled" },
+    { "type": "justice.hearings.completed", "description": "Hearing completed" },
+    { "type": "justice.verdicts.recorded", "description": "Verdict recorded for a case" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "cases", "table": "cases", "fields": ["case_number", "type", "status", "plaintiff"], "labelField": "case_number" },
+      { "name": "lawyers", "table": "lawyers", "fields": ["name", "bar_number", "specialization", "phone"], "labelField": "name" },
+      { "name": "hearings", "table": "hearings", "fields": ["case_number", "date", "type", "status"], "labelField": "case_number" }
+    ]
+  }
+}

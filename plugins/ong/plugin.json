@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.ong",
+  "name": "NGO Management",
+  "slug": "ong",
+  "version": "1.0.0",
+  "description": "Complete NGO and non-profit management — manage projects, track donors, register beneficiaries, and generate impact reports with budget transparency.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchProjects", "description": "Search for projects by name, status, or sector" },
+    { "type": "create", "name": "createDonor", "description": "Register a new donor with contribution history" },
+    { "type": "read", "name": "getBeneficiary", "description": "Get beneficiary profile with project assignments and aid received" },
+    { "type": "update", "name": "updateProject", "description": "Update project details, budget, or timeline" },
+    { "type": "delete", "name": "deleteProject", "description": "Archive or delete a project" },
+    { "type": "read", "name": "getReport", "description": "Get project report with impact metrics and financials" },
+    { "type": "search", "name": "searchBeneficiaries", "description": "Search beneficiaries by name, location, or project" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "ong-dashboard", "label": "NGO Management", "icon": "Heart", "href": "plugin:ong:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "ong-projects", "label": "Projects", "icon": "Heart", "href": "plugin:ong:projects", "section": "PLUGINS", "order": 20, "parentId": "ong-dashboard" },
+    { "id": "ong-donors", "label": "Donors", "icon": "Gift", "href": "plugin:ong:donors", "section": "PLUGINS", "order": 30, "parentId": "ong-dashboard" },
+    { "id": "ong-beneficiaries", "label": "Beneficiaries", "icon": "Users", "href": "plugin:ong:beneficiaries", "section": "PLUGINS", "order": 40, "parentId": "ong-dashboard" },
+    { "id": "ong-reports", "label": "Reports", "icon": "BarChart3", "href": "plugin:ong:reports", "section": "PLUGINS", "order": 50, "parentId": "ong-dashboard" }
+  ],
+  "permissions": [
+    { "id": "ong.read", "name": "Read", "description": "Read NGO data including projects, donors, and beneficiaries" },
+    { "id": "ong.write", "name": "Write", "description": "Create/Update projects, donors, beneficiaries, and reports" },
+    { "id": "ong.delete", "name": "Delete", "description": "Delete projects, donor records, and beneficiary registrations" },
+    { "id": "ong.admin", "name": "Admin", "description": "Full NGO administration including budget allocation and reporting" }
+  ],
+  "settings": [
+    { "key": "ong.name", "type": "string", "label": "Organization Name", "defaultValue": "My NGO" },
+    { "key": "ong.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "ong.vat", "type": "number", "label": "Tax Exempt Rate (%)", "defaultValue": 0 },
+    { "key": "ong.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "ong.fiscalYearStart", "type": "string", "label": "Fiscal Year Start Month", "defaultValue": "01" }
+  ],
+  "events": [
+    { "type": "ong.projects.created", "description": "New project launched" },
+    { "type": "ong.projects.updated", "description": "Project details or budget updated" },
+    { "type": "ong.donors.created", "description": "New donor registered" },
+    { "type": "ong.donors.donationReceived", "description": "Donation received from a donor" },
+    { "type": "ong.beneficiaries.created", "description": "New beneficiary registered" },
+    { "type": "ong.reports.generated", "description": "Impact report generated" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "projects", "table": "projects", "fields": ["name", "sector", "status", "location"], "labelField": "name" },
+      { "name": "donors", "table": "donors", "fields": ["name", "email", "type", "status"], "labelField": "name" },
+      { "name": "beneficiaries", "table": "beneficiaries", "fields": ["first_name", "last_name", "location", "project_name"], "labelField": "first_name" }
+    ]
+  }
+}

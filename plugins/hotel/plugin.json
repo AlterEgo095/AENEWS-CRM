@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.hotel",
+  "name": "Hotel Management",
+  "slug": "hotel",
+  "version": "1.0.0",
+  "description": "Full-featured hotel management system — manage rooms, handle reservations, track guest stays, and oversee bookings with real-time availability and billing.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchRooms", "description": "Search for available rooms by type, capacity, or amenities" },
+    { "type": "create", "name": "createReservation", "description": "Create a new room reservation for a guest" },
+    { "type": "read", "name": "getGuest", "description": "Get guest profile with stay history" },
+    { "type": "update", "name": "updateBooking", "description": "Update booking dates, room, or guest details" },
+    { "type": "delete", "name": "deleteReservation", "description": "Cancel or delete a reservation" },
+    { "type": "read", "name": "getRoom", "description": "Get room details with current status and amenities" },
+    { "type": "search", "name": "searchGuests", "description": "Search for guests by name, email, or phone" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "hotel-dashboard", "label": "Hotel Management", "icon": "BedDouble", "href": "plugin:hotel:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "hotel-rooms", "label": "Rooms", "icon": "BedDouble", "href": "plugin:hotel:rooms", "section": "PLUGINS", "order": 20, "parentId": "hotel-dashboard" },
+    { "id": "hotel-reservations", "label": "Reservations", "icon": "CalendarDays", "href": "plugin:hotel:reservations", "section": "PLUGINS", "order": 30, "parentId": "hotel-dashboard" },
+    { "id": "hotel-guests", "label": "Guests", "icon": "UserCheck", "href": "plugin:hotel:guests", "section": "PLUGINS", "order": 40, "parentId": "hotel-dashboard" },
+    { "id": "hotel-bookings", "label": "Bookings", "icon": "BookOpen", "href": "plugin:hotel:bookings", "section": "PLUGINS", "order": 50, "parentId": "hotel-dashboard" }
+  ],
+  "permissions": [
+    { "id": "hotel.read", "name": "Read", "description": "Read hotel data including rooms, guests, and reservations" },
+    { "id": "hotel.write", "name": "Write", "description": "Create/Update rooms, reservations, guests, and bookings" },
+    { "id": "hotel.delete", "name": "Delete", "description": "Delete reservations, guest records, and bookings" },
+    { "id": "hotel.admin", "name": "Admin", "description": "Full hotel administration including pricing and room configuration" }
+  ],
+  "settings": [
+    { "key": "hotel.name", "type": "string", "label": "Hotel Name", "defaultValue": "My Hotel" },
+    { "key": "hotel.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "hotel.vat", "type": "number", "label": "VAT Rate (%)", "defaultValue": 0 },
+    { "key": "hotel.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "hotel.checkInTime", "type": "string", "label": "Default Check-in Time", "defaultValue": "14:00" }
+  ],
+  "events": [
+    { "type": "hotel.rooms.created", "description": "New room added to the hotel" },
+    { "type": "hotel.rooms.updated", "description": "Room details or status updated" },
+    { "type": "hotel.reservations.created", "description": "New reservation created" },
+    { "type": "hotel.reservations.cancelled", "description": "Reservation cancelled by guest or staff" },
+    { "type": "hotel.guests.checkedIn", "description": "Guest has checked in" },
+    { "type": "hotel.guests.checkedOut", "description": "Guest has checked out" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "rooms", "table": "rooms", "fields": ["number", "type", "status", "floor"], "labelField": "number" },
+      { "name": "guests", "table": "guests", "fields": ["first_name", "last_name", "email", "phone"], "labelField": "first_name" },
+      { "name": "reservations", "table": "reservations", "fields": ["guest_name", "room_number", "status"], "labelField": "guest_name" }
+    ]
+  }
+}

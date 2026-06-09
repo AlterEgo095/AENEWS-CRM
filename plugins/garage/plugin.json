@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.garage",
+  "name": "Garage Management",
+  "slug": "garage",
+  "version": "1.0.0",
+  "description": "Complete garage and auto repair shop management — track vehicles, schedule repairs, manage mechanics, and generate invoices with parts and labor billing.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchCars", "description": "Search for cars by make, model, plate, or owner" },
+    { "type": "create", "name": "createRepair", "description": "Create a new repair order for a vehicle" },
+    { "type": "read", "name": "getInvoice", "description": "Get invoice by ID with full breakdown" },
+    { "type": "update", "name": "updateMechanic", "description": "Update mechanic profile and availability" },
+    { "type": "delete", "name": "deleteCar", "description": "Remove a vehicle from the garage system" },
+    { "type": "read", "name": "getRepair", "description": "Get repair order by ID with status history" },
+    { "type": "search", "name": "searchMechanics", "description": "Search for available mechanics by specialty" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "garage-dashboard", "label": "Garage Management", "icon": "Car", "href": "plugin:garage:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "garage-cars", "label": "Vehicles", "icon": "Car", "href": "plugin:garage:cars", "section": "PLUGINS", "order": 20, "parentId": "garage-dashboard" },
+    { "id": "garage-repairs", "label": "Repairs", "icon": "Wrench", "href": "plugin:garage:repairs", "section": "PLUGINS", "order": 30, "parentId": "garage-dashboard" },
+    { "id": "garage-mechanics", "label": "Mechanics", "icon": "Users", "href": "plugin:garage:mechanics", "section": "PLUGINS", "order": 40, "parentId": "garage-dashboard" },
+    { "id": "garage-invoices", "label": "Invoices", "icon": "Receipt", "href": "plugin:garage:invoices", "section": "PLUGINS", "order": 50, "parentId": "garage-dashboard" }
+  ],
+  "permissions": [
+    { "id": "garage.read", "name": "Read", "description": "Read garage data including vehicles, repairs, and invoices" },
+    { "id": "garage.write", "name": "Write", "description": "Create/Update vehicles, repairs, mechanics, and invoices" },
+    { "id": "garage.delete", "name": "Delete", "description": "Delete vehicles, repair records, and invoices" },
+    { "id": "garage.admin", "name": "Admin", "description": "Full garage administration including settings and user management" }
+  ],
+  "settings": [
+    { "key": "garage.name", "type": "string", "label": "Garage Name", "defaultValue": "My Garage" },
+    { "key": "garage.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "garage.vat", "type": "number", "label": "VAT Rate (%)", "defaultValue": 0 },
+    { "key": "garage.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "garage.laborRate", "type": "number", "label": "Default Labor Rate per Hour", "defaultValue": 50 }
+  ],
+  "events": [
+    { "type": "garage.cars.created", "description": "Vehicle registered in the garage" },
+    { "type": "garage.cars.updated", "description": "Vehicle information updated" },
+    { "type": "garage.cars.deleted", "description": "Vehicle removed from the garage" },
+    { "type": "garage.repairs.created", "description": "New repair order created" },
+    { "type": "garage.repairs.completed", "description": "Repair order marked as completed" },
+    { "type": "garage.invoices.generated", "description": "Invoice generated for a repair" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "cars", "table": "cars", "fields": ["make", "model", "plate", "owner_name"], "labelField": "make" },
+      { "name": "repairs", "table": "repairs", "fields": ["description", "status", "car_plate"], "labelField": "description" },
+      { "name": "mechanics", "table": "mechanics", "fields": ["name", "specialty", "phone"], "labelField": "name" }
+    ]
+  }
+}

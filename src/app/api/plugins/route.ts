@@ -1,5 +1,6 @@
 import { NextRequest, Response } from 'next/server';
 import { getPluginsForTenant, installPlugin } from '@/lib/plugin-registry';
+import { getPluginEngine } from '@/core/plugin-engine';
 import { eventBus, EVENT_TYPES } from '@/lib/event-bus';
 
 /**
@@ -16,23 +17,14 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
 
     if (!tenantId) {
-      return Response.json(
-        { error: 'tenantId query parameter is required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'tenantId query parameter is required' }, { status: 400 });
     }
 
-    const result = await getPluginsForTenant(tenantId, {
-      category: category || undefined,
-    });
-
+    const result = await getPluginsForTenant(tenantId, { category: category || undefined });
     return Response.json(result);
   } catch (error) {
     console.error('[GET /api/plugins] Error:', error);
-    return Response.json(
-      { error: 'Failed to fetch plugins' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'Failed to fetch plugins' }, { status: 500 });
   }
 }
 
@@ -47,18 +39,13 @@ export async function POST(request: NextRequest) {
     const { tenantId, pluginSlug, settings } = body;
 
     if (!tenantId || !pluginSlug) {
-      return Response.json(
-        { error: 'tenantId and pluginSlug are required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'tenantId and pluginSlug are required' }, { status: 400 });
     }
 
     const installed = await installPlugin(tenantId, pluginSlug, settings);
 
     await eventBus.emit(EVENT_TYPES.PLUGIN_INSTALLED, {
-      tenantId,
-      pluginId: installed.pluginId,
-      pluginSlug,
+      tenantId, pluginId: installed.pluginId, pluginSlug,
     });
 
     return Response.json({

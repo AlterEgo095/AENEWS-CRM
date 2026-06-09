@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.clinic",
+  "name": "Clinical Management",
+  "slug": "clinic",
+  "version": "1.0.0",
+  "description": "Full clinical management system — manage patient records, schedule appointments, assign doctors, and track treatments with medical history and billing integration.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchPatients", "description": "Search for patients by name, ID, or phone number" },
+    { "type": "create", "name": "createAppointment", "description": "Schedule a new patient appointment with a doctor" },
+    { "type": "read", "name": "getDoctor", "description": "Get doctor profile with schedule and specialties" },
+    { "type": "update", "name": "updateTreatment", "description": "Update treatment plan, medication, or notes" },
+    { "type": "delete", "name": "deleteAppointment", "description": "Cancel or delete a patient appointment" },
+    { "type": "read", "name": "getPatient", "description": "Get patient profile with medical history and treatments" },
+    { "type": "search", "name": "searchAppointments", "description": "Search appointments by date, doctor, or status" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "clinic-dashboard", "label": "Clinical Management", "icon": "Stethoscope", "href": "plugin:clinic:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "clinic-patients", "label": "Patients", "icon": "Stethoscope", "href": "plugin:clinic:patients", "section": "PLUGINS", "order": 20, "parentId": "clinic-dashboard" },
+    { "id": "clinic-appointments", "label": "Appointments", "icon": "CalendarCheck", "href": "plugin:clinic:appointments", "section": "PLUGINS", "order": 30, "parentId": "clinic-dashboard" },
+    { "id": "clinic-doctors", "label": "Doctors", "icon": "UserRound", "href": "plugin:clinic:doctors", "section": "PLUGINS", "order": 40, "parentId": "clinic-dashboard" },
+    { "id": "clinic-treatments", "label": "Treatments", "icon": "FileText", "href": "plugin:clinic:treatments", "section": "PLUGINS", "order": 50, "parentId": "clinic-dashboard" }
+  ],
+  "permissions": [
+    { "id": "clinic.read", "name": "Read", "description": "Read clinic data including patients, appointments, and treatments" },
+    { "id": "clinic.write", "name": "Write", "description": "Create/Update patients, appointments, doctors, and treatments" },
+    { "id": "clinic.delete", "name": "Delete", "description": "Delete patient records, appointments, and treatment plans" },
+    { "id": "clinic.admin", "name": "Admin", "description": "Full clinic administration including scheduling and billing policies" }
+  ],
+  "settings": [
+    { "key": "clinic.name", "type": "string", "label": "Clinic Name", "defaultValue": "My Clinic" },
+    { "key": "clinic.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "clinic.vat", "type": "number", "label": "VAT Rate (%)", "defaultValue": 0 },
+    { "key": "clinic.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "clinic.appointmentDuration", "type": "number", "label": "Default Appointment Duration (min)", "defaultValue": 30 }
+  ],
+  "events": [
+    { "type": "clinic.patients.created", "description": "New patient registered" },
+    { "type": "clinic.patients.updated", "description": "Patient information updated" },
+    { "type": "clinic.appointments.created", "description": "New appointment scheduled" },
+    { "type": "clinic.appointments.cancelled", "description": "Appointment cancelled" },
+    { "type": "clinic.treatments.created", "description": "New treatment plan created" },
+    { "type": "clinic.appointments.completed", "description": "Appointment completed" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "patients", "table": "patients", "fields": ["first_name", "last_name", "phone", "id_number"], "labelField": "first_name" },
+      { "name": "appointments", "table": "appointments", "fields": ["patient_name", "doctor_name", "date", "status"], "labelField": "patient_name" },
+      { "name": "doctors", "table": "doctors", "fields": ["name", "specialty", "phone"], "labelField": "name" }
+    ]
+  }
+}

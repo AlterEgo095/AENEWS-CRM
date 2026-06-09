@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.university",
+  "name": "University Management",
+  "slug": "university",
+  "version": "1.0.0",
+  "description": "Comprehensive university management system — manage students, courses, enrollments, and grades with academic calendars, transcripts, and department oversight.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchStudents", "description": "Search for students by name, ID, or program" },
+    { "type": "create", "name": "createEnrollment", "description": "Enroll a student in a course" },
+    { "type": "read", "name": "getCourse", "description": "Get course details with enrolled students and schedule" },
+    { "type": "update", "name": "updateGrade", "description": "Update a student's grade for a course" },
+    { "type": "delete", "name": "deleteEnrollment", "description": "Drop a student from a course" },
+    { "type": "read", "name": "getStudent", "description": "Get student profile with transcript and enrollments" },
+    { "type": "search", "name": "searchCourses", "description": "Search courses by name, code, department, or instructor" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "university-dashboard", "label": "University", "icon": "GraduationCap", "href": "plugin:university:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "university-students", "label": "Students", "icon": "GraduationCap", "href": "plugin:university:students", "section": "PLUGINS", "order": 20, "parentId": "university-dashboard" },
+    { "id": "university-courses", "label": "Courses", "icon": "BookOpen", "href": "plugin:university:courses", "section": "PLUGINS", "order": 30, "parentId": "university-dashboard" },
+    { "id": "university-enrollments", "label": "Enrollments", "icon": "Users", "href": "plugin:university:enrollments", "section": "PLUGINS", "order": 40, "parentId": "university-dashboard" },
+    { "id": "university-grades", "label": "Grades", "icon": "FileText", "href": "plugin:university:grades", "section": "PLUGINS", "order": 50, "parentId": "university-dashboard" }
+  ],
+  "permissions": [
+    { "id": "university.read", "name": "Read", "description": "Read university data including students, courses, and grades" },
+    { "id": "university.write", "name": "Write", "description": "Create/Update students, courses, enrollments, and grades" },
+    { "id": "university.delete", "name": "Delete", "description": "Delete students, courses, enrollments, and grade records" },
+    { "id": "university.admin", "name": "Admin", "description": "Full university administration including academic policies" }
+  ],
+  "settings": [
+    { "key": "university.name", "type": "string", "label": "University Name", "defaultValue": "My University" },
+    { "key": "university.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "university.gradingScale", "type": "select", "label": "Grading Scale", "defaultValue": "A-F", "options": [{"label": "A-F", "value": "A-F"}, {"label": "1-20", "value": "1-20"}, {"label": "Percentage", "value": "percentage"}] },
+    { "key": "university.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "university.maxEnrollment", "type": "number", "label": "Max Students per Course", "defaultValue": 40 }
+  ],
+  "events": [
+    { "type": "university.students.created", "description": "New student registered" },
+    { "type": "university.students.updated", "description": "Student information updated" },
+    { "type": "university.courses.created", "description": "New course added to the catalog" },
+    { "type": "university.enrollments.created", "description": "Student enrolled in a course" },
+    { "type": "university.grades.updated", "description": "Student grade updated" },
+    { "type": "university.enrollments.dropped", "description": "Student dropped from a course" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "students", "table": "students", "fields": ["first_name", "last_name", "student_id", "program"], "labelField": "first_name" },
+      { "name": "courses", "table": "courses", "fields": ["name", "code", "department", "instructor"], "labelField": "name" },
+      { "name": "enrollments", "table": "enrollments", "fields": ["student_name", "course_name", "status"], "labelField": "student_name" }
+    ]
+  }
+}

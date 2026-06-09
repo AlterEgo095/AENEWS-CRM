@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.eglise",
+  "name": "Church Management",
+  "slug": "eglise",
+  "version": "1.0.0",
+  "description": "Complete church management system — manage members, organize events, track donations and tithes, and oversee ministries with attendance tracking and communication tools.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchMembers", "description": "Search for church members by name, family, or role" },
+    { "type": "create", "name": "createEvent", "description": "Create a new church event or service" },
+    { "type": "read", "name": "getDonation", "description": "Get donation details with donor and purpose" },
+    { "type": "update", "name": "updateMinistry", "description": "Update ministry details, leaders, or members" },
+    { "type": "delete", "name": "deleteEvent", "description": "Cancel or delete a church event" },
+    { "type": "read", "name": "getMember", "description": "Get member profile with attendance and giving history" },
+    { "type": "search", "name": "searchEvents", "description": "Search events by name, date, or type" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "eglise-dashboard", "label": "Church Management", "icon": "Church", "href": "plugin:eglise:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "eglise-members", "label": "Members", "icon": "Church", "href": "plugin:eglise:members", "section": "PLUGINS", "order": 20, "parentId": "eglise-dashboard" },
+    { "id": "eglise-events", "label": "Events", "icon": "Bell", "href": "plugin:eglise:events", "section": "PLUGINS", "order": 30, "parentId": "eglise-dashboard" },
+    { "id": "eglise-donations", "label": "Donations", "icon": "HandHeart", "href": "plugin:eglise:donations", "section": "PLUGINS", "order": 40, "parentId": "eglise-dashboard" },
+    { "id": "eglise-ministries", "label": "Ministries", "icon": "Users", "href": "plugin:eglise:ministries", "section": "PLUGINS", "order": 50, "parentId": "eglise-dashboard" }
+  ],
+  "permissions": [
+    { "id": "eglise.read", "name": "Read", "description": "Read church data including members, events, and donations" },
+    { "id": "eglise.write", "name": "Write", "description": "Create/Update members, events, donations, and ministries" },
+    { "id": "eglise.delete", "name": "Delete", "description": "Delete members, events, donations, and ministry records" },
+    { "id": "eglise.admin", "name": "Admin", "description": "Full church administration including settings and financial oversight" }
+  ],
+  "settings": [
+    { "key": "eglise.name", "type": "string", "label": "Church Name", "defaultValue": "My Church" },
+    { "key": "eglise.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "eglise.vat", "type": "number", "label": "Tax Exempt Rate (%)", "defaultValue": 0 },
+    { "key": "eglise.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "eglise.defaultServiceTime", "type": "string", "label": "Default Service Time", "defaultValue": "10:00" }
+  ],
+  "events": [
+    { "type": "eglise.members.created", "description": "New member registered" },
+    { "type": "eglise.members.updated", "description": "Member information updated" },
+    { "type": "eglise.events.created", "description": "New event created" },
+    { "type": "eglise.donations.received", "description": "Donation or tithe received" },
+    { "type": "eglise.ministries.created", "description": "New ministry created" },
+    { "type": "eglise.events.completed", "description": "Event completed" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "members", "table": "members", "fields": ["first_name", "last_name", "email", "phone", "role"], "labelField": "first_name" },
+      { "name": "events", "table": "events", "fields": ["name", "type", "date", "location"], "labelField": "name" },
+      { "name": "donations", "table": "donations", "fields": ["donor_name", "amount", "type", "date"], "labelField": "donor_name" }
+    ]
+  }
+}

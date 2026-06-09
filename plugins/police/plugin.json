@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.police",
+  "name": "Police Management",
+  "slug": "police",
+  "version": "1.0.0",
+  "description": "Comprehensive police department management — manage cases, track officers, log incidents, and generate reports with evidence tracking and case workflows.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchCases", "description": "Search for cases by number, type, status, or officer" },
+    { "type": "create", "name": "createIncident", "description": "Log a new incident report with details and location" },
+    { "type": "read", "name": "getOfficer", "description": "Get officer profile with assigned cases and schedule" },
+    { "type": "update", "name": "updateCase", "description": "Update case status, assign officers, or add notes" },
+    { "type": "delete", "name": "deleteIncident", "description": "Remove an incident record" },
+    { "type": "read", "name": "getCase", "description": "Get case details with timeline, evidence, and officers" },
+    { "type": "search", "name": "searchIncidents", "description": "Search incidents by date, type, location, or status" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "police-dashboard", "label": "Police Department", "icon": "Shield", "href": "plugin:police:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "police-cases", "label": "Cases", "icon": "Shield", "href": "plugin:police:cases", "section": "PLUGINS", "order": 20, "parentId": "police-dashboard" },
+    { "id": "police-officers", "label": "Officers", "icon": "Badge", "href": "plugin:police:officers", "section": "PLUGINS", "order": 30, "parentId": "police-dashboard" },
+    { "id": "police-incidents", "label": "Incidents", "icon": "FileSearch", "href": "plugin:police:incidents", "section": "PLUGINS", "order": 40, "parentId": "police-dashboard" },
+    { "id": "police-reports", "label": "Reports", "icon": "FileText", "href": "plugin:police:reports", "section": "PLUGINS", "order": 50, "parentId": "police-dashboard" }
+  ],
+  "permissions": [
+    { "id": "police.read", "name": "Read", "description": "Read police data including cases, officers, and incidents" },
+    { "id": "police.write", "name": "Write", "description": "Create/Update cases, officers, incidents, and reports" },
+    { "id": "police.delete", "name": "Delete", "description": "Delete cases, incident records, and reports" },
+    { "id": "police.admin", "name": "Admin", "description": "Full police administration including case assignment and access control" }
+  ],
+  "settings": [
+    { "key": "police.name", "type": "string", "label": "Department Name", "defaultValue": "My Police Department" },
+    { "key": "police.jurisdiction", "type": "string", "label": "Jurisdiction", "defaultValue": "" },
+    { "key": "police.casePrefix", "type": "string", "label": "Case Number Prefix", "defaultValue": "PD" },
+    { "key": "police.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "police.autoAssignCases", "type": "boolean", "label": "Auto-assign Cases to Officers", "defaultValue": false }
+  ],
+  "events": [
+    { "type": "police.cases.created", "description": "New case opened" },
+    { "type": "police.cases.updated", "description": "Case status or details updated" },
+    { "type": "police.cases.closed", "description": "Case closed" },
+    { "type": "police.incidents.created", "description": "New incident logged" },
+    { "type": "police.officers.created", "description": "New officer registered" },
+    { "type": "police.reports.generated", "description": "Case report generated" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "cases", "table": "cases", "fields": ["case_number", "type", "status", "assigned_officer"], "labelField": "case_number" },
+      { "name": "officers", "table": "officers", "fields": ["name", "badge_number", "rank", "specialty"], "labelField": "name" },
+      { "name": "incidents", "table": "incidents", "fields": ["title", "type", "location", "status"], "labelField": "title" }
+    ]
+  }
+}

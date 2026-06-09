@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.immobilier",
+  "name": "Real Estate Management",
+  "slug": "immobilier",
+  "version": "1.0.0",
+  "description": "Comprehensive real estate management — manage property listings, track tenants, handle rental contracts, and oversee property portfolios with lease management.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchProperties", "description": "Search for properties by location, type, price, or status" },
+    { "type": "create", "name": "createListing", "description": "Create a new property listing for rent or sale" },
+    { "type": "read", "name": "getContract", "description": "Get rental contract with full terms and tenant details" },
+    { "type": "update", "name": "updateTenant", "description": "Update tenant information or lease status" },
+    { "type": "delete", "name": "deleteListing", "description": "Remove a property listing from the market" },
+    { "type": "read", "name": "getProperty", "description": "Get property details with media, features, and history" },
+    { "type": "search", "name": "searchTenants", "description": "Search tenants by name, property, or lease status" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "immobilier-dashboard", "label": "Real Estate", "icon": "Building2", "href": "plugin:immobilier:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "immobilier-properties", "label": "Properties", "icon": "Building2", "href": "plugin:immobilier:properties", "section": "PLUGINS", "order": 20, "parentId": "immobilier-dashboard" },
+    { "id": "immobilier-listings", "label": "Listings", "icon": "Home", "href": "plugin:immobilier:listings", "section": "PLUGINS", "order": 30, "parentId": "immobilier-dashboard" },
+    { "id": "immobilier-tenants", "label": "Tenants", "icon": "Users", "href": "plugin:immobilier:tenants", "section": "PLUGINS", "order": 40, "parentId": "immobilier-dashboard" },
+    { "id": "immobilier-contracts", "label": "Contracts", "icon": "FileSignature", "href": "plugin:immobilier:contracts", "section": "PLUGINS", "order": 50, "parentId": "immobilier-dashboard" }
+  ],
+  "permissions": [
+    { "id": "immobilier.read", "name": "Read", "description": "Read real estate data including properties, listings, and tenants" },
+    { "id": "immobilier.write", "name": "Write", "description": "Create/Update properties, listings, tenants, and contracts" },
+    { "id": "immobilier.delete", "name": "Delete", "description": "Delete properties, listings, tenants, and contracts" },
+    { "id": "immobilier.admin", "name": "Admin", "description": "Full real estate administration including pricing and commission settings" }
+  ],
+  "settings": [
+    { "key": "immobilier.name", "type": "string", "label": "Agency Name", "defaultValue": "My Real Estate" },
+    { "key": "immobilier.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "immobilier.commission", "type": "number", "label": "Default Commission (%)", "defaultValue": 5 },
+    { "key": "immobilier.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "immobilier.defaultLeaseDuration", "type": "number", "label": "Default Lease Duration (months)", "defaultValue": 12 }
+  ],
+  "events": [
+    { "type": "immobilier.properties.created", "description": "New property added to portfolio" },
+    { "type": "immobilier.properties.updated", "description": "Property details updated" },
+    { "type": "immobilier.listings.created", "description": "New listing published" },
+    { "type": "immobilier.listings.sold", "description": "Property sold through listing" },
+    { "type": "immobilier.contracts.signed", "description": "Rental contract signed by tenant" },
+    { "type": "immobilier.tenants.created", "description": "New tenant registered" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "properties", "table": "properties", "fields": ["name", "address", "type", "status"], "labelField": "name" },
+      { "name": "listings", "table": "listings", "fields": ["title", "property_name", "price", "listing_type"], "labelField": "title" },
+      { "name": "tenants", "table": "tenants", "fields": ["first_name", "last_name", "email", "phone"], "labelField": "first_name" }
+    ]
+  }
+}

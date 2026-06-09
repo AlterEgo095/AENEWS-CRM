@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.pharmacy",
+  "name": "Pharmacy Management",
+  "slug": "pharmacy",
+  "version": "1.0.0",
+  "description": "Complete pharmacy management system — manage medicine inventory, process prescriptions, track stock levels, and handle supplier orders with expiration date monitoring.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchMedicines", "description": "Search for medicines by name, active ingredient, or category" },
+    { "type": "create", "name": "createPrescription", "description": "Create a new prescription for a patient" },
+    { "type": "read", "name": "getInventory", "description": "Get inventory item with stock level and expiry info" },
+    { "type": "update", "name": "updateInventory", "description": "Update stock levels, pricing, or supplier info" },
+    { "type": "delete", "name": "deleteMedicine", "description": "Remove a medicine from the catalog" },
+    { "type": "read", "name": "getPrescription", "description": "Get prescription details with medications and dosage" },
+    { "type": "search", "name": "searchPrescriptions", "description": "Search prescriptions by patient, doctor, or date" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "pharmacy-dashboard", "label": "Pharmacy", "icon": "Pill", "href": "plugin:pharmacy:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "pharmacy-medicines", "label": "Medicines", "icon": "Pill", "href": "plugin:pharmacy:medicines", "section": "PLUGINS", "order": 20, "parentId": "pharmacy-dashboard" },
+    { "id": "pharmacy-prescriptions", "label": "Prescriptions", "icon": "FileText", "href": "plugin:pharmacy:prescriptions", "section": "PLUGINS", "order": 30, "parentId": "pharmacy-dashboard" },
+    { "id": "pharmacy-inventory", "label": "Inventory", "icon": "Package", "href": "plugin:pharmacy:inventory", "section": "PLUGINS", "order": 40, "parentId": "pharmacy-dashboard" },
+    { "id": "pharmacy-suppliers", "label": "Suppliers", "icon": "Truck", "href": "plugin:pharmacy:suppliers", "section": "PLUGINS", "order": 50, "parentId": "pharmacy-dashboard" }
+  ],
+  "permissions": [
+    { "id": "pharmacy.read", "name": "Read", "description": "Read pharmacy data including medicines, prescriptions, and inventory" },
+    { "id": "pharmacy.write", "name": "Write", "description": "Create/Update medicines, prescriptions, inventory, and suppliers" },
+    { "id": "pharmacy.delete", "name": "Delete", "description": "Delete medicines, prescriptions, and inventory records" },
+    { "id": "pharmacy.admin", "name": "Admin", "description": "Full pharmacy administration including pricing and regulatory settings" }
+  ],
+  "settings": [
+    { "key": "pharmacy.name", "type": "string", "label": "Pharmacy Name", "defaultValue": "My Pharmacy" },
+    { "key": "pharmacy.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "pharmacy.vat", "type": "number", "label": "VAT Rate (%)", "defaultValue": 0 },
+    { "key": "pharmacy.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "pharmacy.lowStockThreshold", "type": "number", "label": "Low Stock Alert Threshold", "defaultValue": 10 }
+  ],
+  "events": [
+    { "type": "pharmacy.medicines.created", "description": "New medicine added to catalog" },
+    { "type": "pharmacy.medicines.updated", "description": "Medicine details or pricing updated" },
+    { "type": "pharmacy.prescriptions.created", "description": "New prescription created" },
+    { "type": "pharmacy.prescriptions.dispensed", "description": "Prescription dispensed to patient" },
+    { "type": "pharmacy.inventory.lowStock", "description": "Inventory item fell below threshold" },
+    { "type": "pharmacy.suppliers.orderPlaced", "description": "Order placed with a supplier" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "medicines", "table": "medicines", "fields": ["name", "active_ingredient", "category", "dosage_form"], "labelField": "name" },
+      { "name": "prescriptions", "table": "prescriptions", "fields": ["patient_name", "doctor_name", "status", "date"], "labelField": "patient_name" },
+      { "name": "inventory", "table": "inventory", "fields": ["medicine_name", "batch_number", "status", "expiry_date"], "labelField": "medicine_name" }
+    ]
+  }
+}

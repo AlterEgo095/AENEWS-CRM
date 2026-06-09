@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.bank",
+  "name": "Banking Management",
+  "slug": "bank",
+  "version": "1.0.0",
+  "description": "Comprehensive banking management system — manage customer accounts, process loans, track transactions, and handle deposits and withdrawals with full audit trails.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchAccounts", "description": "Search for bank accounts by number, holder, or type" },
+    { "type": "create", "name": "createLoan", "description": "Create a new loan application for a customer" },
+    { "type": "read", "name": "getTransaction", "description": "Get transaction details by ID with full metadata" },
+    { "type": "update", "name": "updateAccount", "description": "Update account status, limits, or holder information" },
+    { "type": "delete", "name": "deleteTransaction", "description": "Void or reverse a transaction" },
+    { "type": "read", "name": "getCustomer", "description": "Get customer profile with all linked accounts" },
+    { "type": "search", "name": "searchTransactions", "description": "Search transactions by date range, amount, or type" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "bank-dashboard", "label": "Banking", "icon": "Landmark", "href": "plugin:bank:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "bank-accounts", "label": "Accounts", "icon": "Landmark", "href": "plugin:bank:accounts", "section": "PLUGINS", "order": 20, "parentId": "bank-dashboard" },
+    { "id": "bank-loans", "label": "Loans", "icon": "CreditCard", "href": "plugin:bank:loans", "section": "PLUGINS", "order": 30, "parentId": "bank-dashboard" },
+    { "id": "bank-transactions", "label": "Transactions", "icon": "ArrowLeftRight", "href": "plugin:bank:transactions", "section": "PLUGINS", "order": 40, "parentId": "bank-dashboard" },
+    { "id": "bank-customers", "label": "Customers", "icon": "Users", "href": "plugin:bank:customers", "section": "PLUGINS", "order": 50, "parentId": "bank-dashboard" }
+  ],
+  "permissions": [
+    { "id": "bank.read", "name": "Read", "description": "Read banking data including accounts, loans, and transactions" },
+    { "id": "bank.write", "name": "Write", "description": "Create/Update accounts, loans, and transactions" },
+    { "id": "bank.delete", "name": "Delete", "description": "Delete or void transactions and loan records" },
+    { "id": "bank.admin", "name": "Admin", "description": "Full banking administration including interest rates and policies" }
+  ],
+  "settings": [
+    { "key": "bank.name", "type": "string", "label": "Bank Name", "defaultValue": "My Bank" },
+    { "key": "bank.currency", "type": "select", "label": "Default Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "bank.baseInterestRate", "type": "number", "label": "Base Interest Rate (%)", "defaultValue": 5.5 },
+    { "key": "bank.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "bank.minBalance", "type": "number", "label": "Minimum Account Balance", "defaultValue": 0 }
+  ],
+  "events": [
+    { "type": "bank.accounts.created", "description": "New bank account opened" },
+    { "type": "bank.accounts.closed", "description": "Bank account closed" },
+    { "type": "bank.transactions.created", "description": "New transaction processed" },
+    { "type": "bank.loans.approved", "description": "Loan application approved" },
+    { "type": "bank.loans.rejected", "description": "Loan application rejected" },
+    { "type": "bank.customers.created", "description": "New customer registered" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "accounts", "table": "accounts", "fields": ["account_number", "holder_name", "type", "status"], "labelField": "account_number" },
+      { "name": "loans", "table": "loans", "fields": ["borrower_name", "amount", "status", "type"], "labelField": "borrower_name" },
+      { "name": "customers", "table": "customers", "fields": ["first_name", "last_name", "email", "id_number"], "labelField": "first_name" }
+    ]
+  }
+}

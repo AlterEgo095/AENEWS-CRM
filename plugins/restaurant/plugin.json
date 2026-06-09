@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.restaurant",
+  "name": "Restaurant Management",
+  "slug": "restaurant",
+  "version": "1.0.0",
+  "description": "Complete restaurant management — manage menus, process orders, assign tables, and handle reservations with real-time kitchen tracking and billing integration.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchMenuItems", "description": "Search menu items by name, category, or dietary tag" },
+    { "type": "create", "name": "createOrder", "description": "Create a new dining order linked to a table" },
+    { "type": "read", "name": "getTable", "description": "Get table details with current occupancy and order status" },
+    { "type": "update", "name": "updateMenu", "description": "Update menu item details, price, or availability" },
+    { "type": "delete", "name": "deleteReservation", "description": "Cancel a table reservation" },
+    { "type": "read", "name": "getOrder", "description": "Get order details with items, status, and total" },
+    { "type": "search", "name": "searchOrders", "description": "Search orders by status, table, or date range" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "restaurant-dashboard", "label": "Restaurant", "icon": "UtensilsCrossed", "href": "plugin:restaurant:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "restaurant-menu", "label": "Menu", "icon": "UtensilsCrossed", "href": "plugin:restaurant:menu", "section": "PLUGINS", "order": 20, "parentId": "restaurant-dashboard" },
+    { "id": "restaurant-orders", "label": "Orders", "icon": "ClipboardList", "href": "plugin:restaurant:orders", "section": "PLUGINS", "order": 30, "parentId": "restaurant-dashboard" },
+    { "id": "restaurant-tables", "label": "Tables", "icon": "Table2", "href": "plugin:restaurant:tables", "section": "PLUGINS", "order": 40, "parentId": "restaurant-dashboard" },
+    { "id": "restaurant-reservations", "label": "Reservations", "icon": "CalendarDays", "href": "plugin:restaurant:reservations", "section": "PLUGINS", "order": 50, "parentId": "restaurant-dashboard" }
+  ],
+  "permissions": [
+    { "id": "restaurant.read", "name": "Read", "description": "Read restaurant data including menu, orders, and tables" },
+    { "id": "restaurant.write", "name": "Write", "description": "Create/Update menu items, orders, tables, and reservations" },
+    { "id": "restaurant.delete", "name": "Delete", "description": "Delete menu items, orders, and reservations" },
+    { "id": "restaurant.admin", "name": "Admin", "description": "Full restaurant administration including pricing and floor plans" }
+  ],
+  "settings": [
+    { "key": "restaurant.name", "type": "string", "label": "Restaurant Name", "defaultValue": "My Restaurant" },
+    { "key": "restaurant.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "restaurant.vat", "type": "number", "label": "VAT Rate (%)", "defaultValue": 0 },
+    { "key": "restaurant.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "restaurant.tableCapacity", "type": "number", "label": "Default Table Capacity", "defaultValue": 4 }
+  ],
+  "events": [
+    { "type": "restaurant.menu.created", "description": "New menu item added" },
+    { "type": "restaurant.menu.updated", "description": "Menu item details updated" },
+    { "type": "restaurant.orders.created", "description": "New order placed" },
+    { "type": "restaurant.orders.completed", "description": "Order completed and served" },
+    { "type": "restaurant.tables.freed", "description": "Table freed after guest departure" },
+    { "type": "restaurant.reservations.created", "description": "New table reservation made" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "menu", "table": "menu_items", "fields": ["name", "category", "description", "price"], "labelField": "name" },
+      { "name": "orders", "table": "orders", "fields": ["table_number", "status", "total", "created_at"], "labelField": "table_number" },
+      { "name": "tables", "table": "tables", "fields": ["name", "status", "capacity"], "labelField": "name" }
+    ]
+  }
+}

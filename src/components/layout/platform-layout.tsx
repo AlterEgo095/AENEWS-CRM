@@ -67,6 +67,8 @@ import AppStoreView from '@/components/views/app-store-view';
 import SettingsView from '@/components/views/settings-view';
 import CrmContactsView from '@/components/views/crm-contacts-view';
 import ChatView from '@/components/views/chat-view';
+import PluginView from '@/components/views/plugin-view';
+import PluginEntityView from '@/components/views/plugin-entity-view';
 
 // ============================================================
 // Types
@@ -195,31 +197,26 @@ function AppSidebar() {
     fetchUIExtensions();
   }, []);
 
-  // Merge core sections with dynamic sections
-  const allSections = useMemo(() => {
-    if (dynamicSections.length === 0) return coreNavSections;
-    return coreNavSections;
-  }, [dynamicSections]);
-
-  // Check if there are dynamic CRM sections to show
+  // Check if there are dynamic sections to show
   const hasDynamicSections = dynamicSections.length > 0;
+
+  // Properly merge core sections with dynamic plugin sections
+  const allNavSections = useMemo(() => {
+    const sections = [...coreNavSections];
+    if (hasDynamicSections) {
+      sections.push(...dynamicSections);
+    }
+    return sections;
+  }, [coreNavSections, dynamicSections, hasDynamicSections]);
 
   // All nav items for breadcrumb computation
   const allNavItems = useMemo(() => {
     const items: NavItem[] = [];
-    for (const s of allSections) {
-      for (const i of s.items) items.push(i);
-    }
-    for (const s of dynamicSections) {
+    for (const s of allNavSections) {
       for (const i of s.items) items.push(i);
     }
     return items;
-  }, [allSections, dynamicSections]);
-
-  const allNavSections = useMemo(() => {
-    if (!hasDynamicSections) return allSections;
-    return [...allSections, ...dynamicSections];
-  }, [allSections, dynamicSections, hasDynamicSections]);
+  }, [allNavSections]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -339,27 +336,83 @@ function Header() {
     ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
     : 'Admin User';
 
+  // Dynamic sidebar sections for breadcrumb resolution
+  const [dynamicSections, setDynamicSections] = useState<NavSection[]>([]);
+
+  // Fetch dynamic sections for breadcrumb resolution
+  useEffect(() => {
+    const fetchUI = async () => {
+      try {
+        const res = await fetch('/api/ui-extensions');
+        if (res.ok) {
+          const data = await res.json();
+          const sidebarItems: UISidebarItemData[] = data.sidebar || [];
+          const sectionMap = new Map<string, NavItem[]>();
+          for (const item of sidebarItems) {
+            const section = item.section || 'Plugins';
+            if (!sectionMap.has(section)) sectionMap.set(section, []);
+            sectionMap.get(section)!.push({
+              id: item.id,
+              label: item.label,
+              icon: item.icon ? getIconByName(item.icon) : LucideIcons.Box,
+            });
+          }
+          const sections: NavSection[] = [];
+          for (const [sectionId, items] of sectionMap) {
+            sections.push({
+              id: sectionId.toLowerCase().replace(/\s+/g, '-'),
+              label: sectionId,
+              items: items.sort((a, b) => a.label.localeCompare(b.label)),
+            });
+          }
+          setDynamicSections(sections);
+        }
+      } catch { /* ignore */ }
+    };
+    fetchUI();
+  }, []);
+
   const breadcrumbSegments = useMemo(() => {
-    // Build a flat list of all sections + items
+    // Build a flat list of all sections + items (including dynamic plugin sections)
     const allItems: { section: NavSection; item: NavItem }[] = [];
     for (const s of coreNavSections) {
       for (const i of s.items) {
         allItems.push({ section: s, item: i });
       }
     }
-
-    const current = allItems.find((x) => x.item.id === currentView);
-    if (!current) {
-      // Check dynamic sidebar items (stored in DOM or state)
-      // Fallback: just show the current view ID
-      return [{ label: currentView || 'Dashboard', id: currentView || 'dashboard' }];
+    // Also include dynamic sections for breadcrumb resolution
+    for (const s of dynamicSections) {
+      for (const i of s.items) {
+        allItems.push({ section: s, item: i });
+      }
     }
 
-    const segments = [];
-    segments.push({ label: current.section.label, id: current.section.id });
-    segments.push({ label: current.item.label, id: current.item.id });
-    return segments;
-  }, [currentView]);
+    const current = allItems.find((x) => x.item.id === currentView);
+    if (current) {
+      return [
+        { label: current.section.label, id: current.section.id },
+        { label: current.item.label, id: current.item.id },
+      ];
+    }
+
+    // For unknown views (plugin views with colon notation like "garage:cars")
+    if (currentView.includes(':')) {
+      const parts = currentView.split(':');
+      return [
+        { label: 'Plugins', id: 'plugins' },
+        { label: parts[0].charAt(0).toUpperCase() + parts[0].slice(1), id: parts[0] },
+        { label: parts[1].charAt(0).toUpperCase() + parts[1].slice(1), id: currentView },
+      ];
+    }
+
+    // Try to capitalize the view ID as a fallback
+    return [{
+      label: currentView
+        ? currentView.charAt(0).toUpperCase() + currentView.slice(1).replace(/-/g, ' ')
+        : 'Dashboard',
+      id: currentView || 'dashboard',
+    }];
+  }, [currentView, dynamicSections]);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
@@ -482,29 +535,80 @@ function Header() {
 }
 
 // ============================================================
-// View Switcher
+// Core view IDs that use dedicated components
+// ============================================================
+
+const CORE_VIEW_IDS = new Set([
+  'dashboard',
+  'chat',
+  'plugins',
+  'app-store',
+  'settings',
+]);
+
+// Plugin view IDs that have dedicated components
+// (these are handled specially, but could also fall through to PluginView)
+const CRM_VIEW_IDS = new Set([
+  'crm-contacts',
+  'crm-companies',
+  'crm-deals',
+  'crm-tasks',
+]);
+
+// ============================================================
+// View Switcher — fully dynamic
 // ============================================================
 
 function ViewSwitcher() {
   const { currentView } = useAppStore();
 
-  const viewMap: Record<string, React.ReactNode> = {
-    dashboard: <DashboardView />,
-    chat: <ChatView />,
-    plugins: <PluginsView />,
-    'app-store': <AppStoreView />,
-    settings: <SettingsView />,
-    'crm-contacts': <CrmContactsView />,
-    'crm-companies': <CrmContactsView />,
-    'crm-deals': <CrmContactsView />,
-    'crm-tasks': <CrmContactsView />,
-  };
-
   return (
     <div className="flex-1">
-      {viewMap[currentView] || <DashboardView />}
+      <ViewRouter currentView={currentView} />
     </div>
   );
+}
+
+/**
+ * ViewRouter renders the appropriate view for the currentView.
+ *
+ * 1. Core views (dashboard, chat, plugins, app-store, settings) → dedicated components
+ * 2. Known CRM views (crm-contacts, etc.) → dedicated CRM components
+ * 3. Plugin colon-notation views (e.g., "garage:cars") → PluginEntityView
+ * 4. Any other view ID → generic PluginView (treats the full ID as a plugin slug)
+ */
+function ViewRouter({ currentView }: { currentView: string }) {
+  // 1. Core views
+  if (CORE_VIEW_IDS.has(currentView)) {
+    switch (currentView) {
+      case 'dashboard':
+        return <DashboardView />;
+      case 'chat':
+        return <ChatView />;
+      case 'plugins':
+        return <PluginsView />;
+      case 'app-store':
+        return <AppStoreView />;
+      case 'settings':
+        return <SettingsView />;
+    }
+  }
+
+  // 2. Known CRM views — use dedicated CRM component
+  if (CRM_VIEW_IDS.has(currentView)) {
+    return <CrmContactsView />;
+  }
+
+  // 3. Plugin colon-notation views (e.g., "garage:cars", "hotel:rooms")
+  if (currentView.includes(':')) {
+    const [pluginSlug, entityName] = currentView.split(':', 2);
+    if (pluginSlug && entityName) {
+      return <PluginEntityView pluginSlug={pluginSlug} entityName={entityName} />;
+    }
+  }
+
+  // 4. Any other view ID → treat as plugin slug and use generic PluginView
+  return <PluginView pluginSlug={currentView} />;
 }
 
 // ============================================================

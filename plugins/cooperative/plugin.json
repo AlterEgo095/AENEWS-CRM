@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.cooperative",
+  "name": "Cooperative Management",
+  "slug": "cooperative",
+  "version": "1.0.0",
+  "description": "Full cooperative management system — manage members, track shares and equity, distribute dividends, and oversee cooperative projects with financial transparency.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchMembers", "description": "Search for cooperative members by name, ID, or status" },
+    { "type": "create", "name": "createShare", "description": "Issue new shares to a member" },
+    { "type": "read", "name": "getDividend", "description": "Get dividend details with distribution history" },
+    { "type": "update", "name": "updateProject", "description": "Update cooperative project details or budget" },
+    { "type": "delete", "name": "deleteProject", "description": "Remove a cooperative project" },
+    { "type": "read", "name": "getMember", "description": "Get member profile with shares, dividends, and contributions" },
+    { "type": "search", "name": "searchProjects", "description": "Search projects by name, sector, or status" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "cooperative-dashboard", "label": "Cooperative", "icon": "UsersRound", "href": "plugin:cooperative:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "cooperative-members", "label": "Members", "icon": "UsersRound", "href": "plugin:cooperative:members", "section": "PLUGINS", "order": 20, "parentId": "cooperative-dashboard" },
+    { "id": "cooperative-shares", "label": "Shares", "icon": "CircleDollarSign", "href": "plugin:cooperative:shares", "section": "PLUGINS", "order": 30, "parentId": "cooperative-dashboard" },
+    { "id": "cooperative-dividends", "label": "Dividends", "icon": "TrendingUp", "href": "plugin:cooperative:dividends", "section": "PLUGINS", "order": 40, "parentId": "cooperative-dashboard" },
+    { "id": "cooperative-projects", "label": "Projects", "icon": "Sprout", "href": "plugin:cooperative:projects", "section": "PLUGINS", "order": 50, "parentId": "cooperative-dashboard" }
+  ],
+  "permissions": [
+    { "id": "cooperative.read", "name": "Read", "description": "Read cooperative data including members, shares, and projects" },
+    { "id": "cooperative.write", "name": "Write", "description": "Create/Update members, shares, dividends, and projects" },
+    { "id": "cooperative.delete", "name": "Delete", "description": "Delete members, shares, dividends, and project records" },
+    { "id": "cooperative.admin", "name": "Admin", "description": "Full cooperative administration including share pricing and dividend policies" }
+  ],
+  "settings": [
+    { "key": "cooperative.name", "type": "string", "label": "Cooperative Name", "defaultValue": "My Cooperative" },
+    { "key": "cooperative.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "cooperative.sharePrice", "type": "number", "label": "Share Price", "defaultValue": 100 },
+    { "key": "cooperative.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "cooperative.dividendFrequency", "type": "select", "label": "Dividend Distribution Frequency", "defaultValue": "quarterly", "options": [{"label": "Monthly", "value": "monthly"}, {"label": "Quarterly", "value": "quarterly"}, {"label": "Annually", "value": "annually"}] }
+  ],
+  "events": [
+    { "type": "cooperative.members.created", "description": "New cooperative member registered" },
+    { "type": "cooperative.members.updated", "description": "Member information updated" },
+    { "type": "cooperative.shares.issued", "description": "Shares issued to a member" },
+    { "type": "cooperative.dividends.distributed", "description": "Dividends distributed to members" },
+    { "type": "cooperative.projects.created", "description": "New cooperative project launched" },
+    { "type": "cooperative.projects.completed", "description": "Cooperative project completed" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "members", "table": "members", "fields": ["first_name", "last_name", "member_id", "status"], "labelField": "first_name" },
+      { "name": "shares", "table": "shares", "fields": ["member_name", "number", "status", "amount"], "labelField": "member_name" },
+      { "name": "projects", "table": "projects", "fields": ["name", "sector", "status", "budget"], "labelField": "name" }
+    ]
+  }
+}

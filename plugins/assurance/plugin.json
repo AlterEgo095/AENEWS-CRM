@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.assurance",
+  "name": "Insurance Management",
+  "slug": "assurance",
+  "version": "1.0.0",
+  "description": "Comprehensive insurance management system — manage policies, process claims, track clients, and handle premium payments with coverage analysis and risk assessment.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchPolicies", "description": "Search for insurance policies by number, type, or client" },
+    { "type": "create", "name": "createClaim", "description": "File a new insurance claim against a policy" },
+    { "type": "read", "name": "getClient", "description": "Get client profile with all active policies and claims" },
+    { "type": "update", "name": "updatePolicy", "description": "Update policy coverage, terms, or status" },
+    { "type": "delete", "name": "deletePolicy", "description": "Cancel or remove an insurance policy" },
+    { "type": "read", "name": "getClaim", "description": "Get claim details with assessment and payment status" },
+    { "type": "search", "name": "searchClaims", "description": "Search claims by number, status, or date range" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "assurance-dashboard", "label": "Insurance", "icon": "ShieldCheck", "href": "plugin:assurance:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "assurance-policies", "label": "Policies", "icon": "ShieldCheck", "href": "plugin:assurance:policies", "section": "PLUGINS", "order": 20, "parentId": "assurance-dashboard" },
+    { "id": "assurance-claims", "label": "Claims", "icon": "AlertTriangle", "href": "plugin:assurance:claims", "section": "PLUGINS", "order": 30, "parentId": "assurance-dashboard" },
+    { "id": "assurance-clients", "label": "Clients", "icon": "Users", "href": "plugin:assurance:clients", "section": "PLUGINS", "order": 40, "parentId": "assurance-dashboard" },
+    { "id": "assurance-payments", "label": "Payments", "icon": "Wallet", "href": "plugin:assurance:payments", "section": "PLUGINS", "order": 50, "parentId": "assurance-dashboard" }
+  ],
+  "permissions": [
+    { "id": "assurance.read", "name": "Read", "description": "Read insurance data including policies, claims, and clients" },
+    { "id": "assurance.write", "name": "Write", "description": "Create/Update policies, claims, clients, and payments" },
+    { "id": "assurance.delete", "name": "Delete", "description": "Delete policies, claims, and payment records" },
+    { "id": "assurance.admin", "name": "Admin", "description": "Full insurance administration including coverage rules and risk settings" }
+  ],
+  "settings": [
+    { "key": "assurance.name", "type": "string", "label": "Company Name", "defaultValue": "My Insurance" },
+    { "key": "assurance.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "assurance.vat", "type": "number", "label": "Tax Rate on Premiums (%)", "defaultValue": 0 },
+    { "key": "assurance.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "assurance.claimDeadline", "type": "number", "label": "Claim Submission Deadline (days)", "defaultValue": 30 }
+  ],
+  "events": [
+    { "type": "assurance.policies.created", "description": "New insurance policy issued" },
+    { "type": "assurance.policies.renewed", "description": "Policy renewed for another term" },
+    { "type": "assurance.policies.cancelled", "description": "Policy cancelled" },
+    { "type": "assurance.claims.created", "description": "New claim filed" },
+    { "type": "assurance.claims.approved", "description": "Claim approved for payment" },
+    { "type": "assurance.payments.received", "description": "Premium payment received" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "policies", "table": "policies", "fields": ["policy_number", "type", "status", "client_name"], "labelField": "policy_number" },
+      { "name": "claims", "table": "claims", "fields": ["claim_number", "policy_number", "status", "amount"], "labelField": "claim_number" },
+      { "name": "clients", "table": "clients", "fields": ["first_name", "last_name", "email", "phone"], "labelField": "first_name" }
+    ]
+  }
+}

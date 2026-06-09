@@ -1,0 +1,58 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.transport",
+  "name": "Transport Management",
+  "slug": "transport",
+  "version": "1.0.0",
+  "description": "Complete transport management system — manage vehicles, define routes, create schedules, and sell tickets with real-time tracking and passenger management.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchVehicles", "description": "Search for vehicles by plate, type, or status" },
+    { "type": "create", "name": "createSchedule", "description": "Create a new transport schedule for a route" },
+    { "type": "read", "name": "getRoute", "description": "Get route details with stops and distance" },
+    { "type": "update", "name": "updateTicket", "description": "Update ticket status, seat, or passenger info" },
+    { "type": "delete", "name": "deleteSchedule", "description": "Cancel or delete a transport schedule" },
+    { "type": "read", "name": "getTicket", "description": "Get ticket details with passenger and trip info" },
+    { "type": "search", "name": "searchTickets", "description": "Search tickets by passenger, route, or date" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "transport-dashboard", "label": "Transport", "icon": "Bus", "href": "plugin:transport:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "transport-vehicles", "label": "Vehicles", "icon": "Bus", "href": "plugin:transport:vehicles", "section": "PLUGINS", "order": 20, "parentId": "transport-dashboard" },
+    { "id": "transport-routes", "label": "Routes", "icon": "MapPin", "href": "plugin:transport:routes", "section": "PLUGINS", "order": 30, "parentId": "transport-dashboard" },
+    { "id": "transport-schedules", "label": "Schedules", "icon": "CalendarDays", "href": "plugin:transport:schedules", "section": "PLUGINS", "order": 40, "parentId": "transport-dashboard" },
+    { "id": "transport-tickets", "label": "Tickets", "icon": "Ticket", "href": "plugin:transport:tickets", "section": "PLUGINS", "order": 50, "parentId": "transport-dashboard" }
+  ],
+  "permissions": [
+    { "id": "transport.read", "name": "Read", "description": "Read transport data including vehicles, routes, and tickets" },
+    { "id": "transport.write", "name": "Write", "description": "Create/Update vehicles, routes, schedules, and tickets" },
+    { "id": "transport.delete", "name": "Delete", "description": "Delete vehicles, routes, schedules, and tickets" },
+    { "id": "transport.admin", "name": "Admin", "description": "Full transport administration including pricing and fleet settings" }
+  ],
+  "settings": [
+    { "key": "transport.name", "type": "string", "label": "Company Name", "defaultValue": "My Transport" },
+    { "key": "transport.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "transport.vat", "type": "number", "label": "VAT Rate (%)", "defaultValue": 0 },
+    { "key": "transport.notifications", "type": "boolean", "label": "Enable Notifications", "defaultValue": true },
+    { "key": "transport.defaultCapacity", "type": "number", "label": "Default Vehicle Capacity", "defaultValue": 50 }
+  ],
+  "events": [
+    { "type": "transport.vehicles.created", "description": "New vehicle added to fleet" },
+    { "type": "transport.vehicles.updated", "description": "Vehicle details or status updated" },
+    { "type": "transport.routes.created", "description": "New route defined" },
+    { "type": "transport.schedules.created", "description": "New schedule published" },
+    { "type": "transport.tickets.sold", "description": "Ticket sold to a passenger" },
+    { "type": "transport.schedules.cancelled", "description": "Schedule cancelled" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "vehicles", "table": "vehicles", "fields": ["plate", "type", "make", "status"], "labelField": "plate" },
+      { "name": "routes", "table": "routes", "fields": ["name", "origin", "destination", "status"], "labelField": "name" },
+      { "name": "tickets", "table": "tickets", "fields": ["passenger_name", "route_name", "seat", "status"], "labelField": "passenger_name" }
+    ]
+  }
+}
