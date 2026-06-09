@@ -1,0 +1,54 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.airport",
+  "name": "Airport Management",
+  "slug": "airport",
+  "version": "1.0.0",
+  "description": "Complete airport and aviation management — track flights, gates, passengers, runways, baggage, airlines, and crews with full airside and landside operations oversight.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchFlights", "description": "Search for flights by number, airline, destination, or status" },
+    { "type": "create", "name": "createFlight", "description": "Create a new flight schedule entry" },
+    { "type": "read", "name": "getPassenger", "description": "Get passenger by ID with full travel details" },
+    { "type": "update", "name": "updateGate", "description": "Update gate allocation, status, and availability" },
+    { "type": "delete", "name": "deleteFlight", "description": "Remove a flight from the airport system" },
+    { "type": "read", "name": "getRunway", "description": "Get runway by ID with status and scheduling" },
+    { "type": "search", "name": "searchPassengers", "description": "Search for passengers by name, booking reference, or flight" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "airport-dashboard", "label": "Airport Management", "icon": "Plane", "href": "plugin:airport:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "airport-flights", "label": "Flights", "icon": "Plane", "href": "plugin:airport:flights", "section": "PLUGINS", "order": 20, "parentId": "airport-dashboard" },
+    { "id": "airport-gates", "label": "Gates", "icon": "DoorOpen", "href": "plugin:airport:gates", "section": "PLUGINS", "order": 30, "parentId": "airport-dashboard" },
+    { "id": "airport-passengers", "label": "Passengers", "icon": "Users", "href": "plugin:airport:passengers", "section": "PLUGINS", "order": 40, "parentId": "airport-dashboard" },
+    { "id": "airport-runways", "label": "Runways", "icon": "MoveHorizontal", "href": "plugin:airport:runways", "section": "PLUGINS", "order": 50, "parentId": "airport-dashboard" },
+    { "id": "airport-airlines", "label": "Airlines", "icon": "Building2", "href": "plugin:airport:airlines", "section": "PLUGINS", "order": 60, "parentId": "airport-dashboard" }
+  ],
+  "permissions": [
+    { "id": "airport.read", "name": "Read", "description": "Read airport data including flights, gates, and passengers" },
+    { "id": "airport.write", "name": "Write", "description": "Create/Update flights, gates, passengers, and airlines" },
+    { "id": "airport.delete", "name": "Delete", "description": "Delete flights, passenger records, and gate assignments" },
+    { "id": "airport.admin", "name": "Admin", "description": "Full airport administration including settings and user management" }
+  ],
+  "settings": [
+    { "key": "airport.name", "type": "string", "label": "Airport Name", "defaultValue": "My Airport" },
+    { "key": "airport.timezone", "type": "string", "label": "Timezone", "defaultValue": "UTC" },
+    { "key": "airport.terminalCount", "type": "number", "label": "Number of Terminals", "defaultValue": 2 }
+  ],
+  "events": [
+    { "type": "airport.flights.arrived", "description": "Flight arrived at the airport" },
+    { "type": "airport.flights.departed", "description": "Flight departed from the airport" },
+    { "type": "airport.passengers.boarded", "description": "Passengers boarded a flight" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "flights", "table": "flights", "fields": ["flight_number", "airline", "destination", "status"], "labelField": "flight_number" },
+      { "name": "passengers", "table": "passengers", "fields": ["name", "booking_reference", "flight_number", "seat"], "labelField": "name" },
+      { "name": "airlines", "table": "airlines", "fields": ["name", "code", "country"], "labelField": "name" }
+    ]
+  }
+}

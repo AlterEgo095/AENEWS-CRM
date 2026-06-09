@@ -1,0 +1,54 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.factory",
+  "name": "Factory Management",
+  "slug": "factory",
+  "version": "1.0.0",
+  "description": "Complete factory and manufacturing management — track machines, production lines, products, workers, shifts, and quality checks with full operational oversight.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchMachines", "description": "Search for machines by name, type, status, or location" },
+    { "type": "create", "name": "createProductionOrder", "description": "Create a new production order for a product" },
+    { "type": "read", "name": "getProduct", "description": "Get product by ID with full details and inventory" },
+    { "type": "update", "name": "updateWorker", "description": "Update worker profile, skills, and assignment" },
+    { "type": "delete", "name": "deleteMachine", "description": "Remove a machine from the factory system" },
+    { "type": "read", "name": "getProductionLine", "description": "Get production line by ID with status and throughput" },
+    { "type": "search", "name": "searchWorkers", "description": "Search for workers by name, role, or shift" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "factory-dashboard", "label": "Factory Management", "icon": "Factory", "href": "plugin:factory:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "factory-machines", "label": "Machines", "icon": "Cog", "href": "plugin:factory:machines", "section": "PLUGINS", "order": 20, "parentId": "factory-dashboard" },
+    { "id": "factory-production-lines", "label": "Production Lines", "icon": "GitBranch", "href": "plugin:factory:production-lines", "section": "PLUGINS", "order": 30, "parentId": "factory-dashboard" },
+    { "id": "factory-products", "label": "Products", "icon": "Package", "href": "plugin:factory:products", "section": "PLUGINS", "order": 40, "parentId": "factory-dashboard" },
+    { "id": "factory-workers", "label": "Workers", "icon": "HardHat", "href": "plugin:factory:workers", "section": "PLUGINS", "order": 50, "parentId": "factory-dashboard" },
+    { "id": "factory-shifts", "label": "Shifts", "icon": "Clock", "href": "plugin:factory:shifts", "section": "PLUGINS", "order": 60, "parentId": "factory-dashboard" }
+  ],
+  "permissions": [
+    { "id": "factory.read", "name": "Read", "description": "Read factory data including machines, production lines, and products" },
+    { "id": "factory.write", "name": "Write", "description": "Create/Update machines, production orders, workers, and products" },
+    { "id": "factory.delete", "name": "Delete", "description": "Delete machines, production records, and products" },
+    { "id": "factory.admin", "name": "Admin", "description": "Full factory administration including settings and user management" }
+  ],
+  "settings": [
+    { "key": "factory.name", "type": "string", "label": "Factory Name", "defaultValue": "My Factory" },
+    { "key": "factory.currency", "type": "select", "label": "Currency", "defaultValue": "USD", "options": [{"label": "USD", "value": "USD"}, {"label": "EUR", "value": "EUR"}, {"label": "CDF", "value": "CDF"}] },
+    { "key": "factory.shiftDuration", "type": "number", "label": "Default Shift Duration (hours)", "defaultValue": 8 }
+  ],
+  "events": [
+    { "type": "factory.machines.created", "description": "New machine registered in the factory" },
+    { "type": "factory.production.created", "description": "New production order created" },
+    { "type": "factory.quality.checked", "description": "Quality check completed for a product" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "machines", "table": "machines", "fields": ["name", "type", "status", "location"], "labelField": "name" },
+      { "name": "products", "table": "products", "fields": ["name", "sku", "category", "status"], "labelField": "name" },
+      { "name": "workers", "table": "workers", "fields": ["name", "role", "shift", "department"], "labelField": "name" }
+    ]
+  }
+}

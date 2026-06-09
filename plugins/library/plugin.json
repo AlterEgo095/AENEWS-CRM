@@ -1,0 +1,54 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.library",
+  "name": "Library Management",
+  "slug": "library",
+  "version": "1.0.0",
+  "description": "Complete library management — track books, authors, members, loans, categories, shelves, and reservations with full catalog and circulation oversight.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchBooks", "description": "Search for books by title, author, ISBN, or category" },
+    { "type": "create", "name": "createLoan", "description": "Create a new loan record for a member" },
+    { "type": "read", "name": "getMember", "description": "Get member by ID with full profile and loan history" },
+    { "type": "update", "name": "updateBook", "description": "Update book details, availability, and shelf location" },
+    { "type": "delete", "name": "deleteLoan", "description": "Remove a loan record from the system" },
+    { "type": "read", "name": "getAuthor", "description": "Get author by ID with full bibliography" },
+    { "type": "search", "name": "searchMembers", "description": "Search for members by name, email, or membership ID" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "library-dashboard", "label": "Library Management", "icon": "BookOpen", "href": "plugin:library:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "library-books", "label": "Books", "icon": "BookOpen", "href": "plugin:library:books", "section": "PLUGINS", "order": 20, "parentId": "library-dashboard" },
+    { "id": "library-authors", "label": "Authors", "icon": "PenTool", "href": "plugin:library:authors", "section": "PLUGINS", "order": 30, "parentId": "library-dashboard" },
+    { "id": "library-members", "label": "Members", "icon": "Users", "href": "plugin:library:members", "section": "PLUGINS", "order": 40, "parentId": "library-dashboard" },
+    { "id": "library-loans", "label": "Loans", "icon": "ArrowRightLeft", "href": "plugin:library:loans", "section": "PLUGINS", "order": 50, "parentId": "library-dashboard" },
+    { "id": "library-categories", "label": "Categories", "icon": "Tag", "href": "plugin:library:categories", "section": "PLUGINS", "order": 60, "parentId": "library-dashboard" }
+  ],
+  "permissions": [
+    { "id": "library.read", "name": "Read", "description": "Read library data including books, authors, and members" },
+    { "id": "library.write", "name": "Write", "description": "Create/Update books, authors, members, and loans" },
+    { "id": "library.delete", "name": "Delete", "description": "Delete books, loan records, and member accounts" },
+    { "id": "library.admin", "name": "Admin", "description": "Full library administration including settings and user management" }
+  ],
+  "settings": [
+    { "key": "library.name", "type": "string", "label": "Library Name", "defaultValue": "My Library" },
+    { "key": "library.loanDuration", "type": "number", "label": "Default Loan Duration (days)", "defaultValue": 14 },
+    { "key": "library.maxLoansPerMember", "type": "number", "label": "Maximum Loans Per Member", "defaultValue": 5 }
+  ],
+  "events": [
+    { "type": "library.books.added", "description": "New book added to the library catalog" },
+    { "type": "library.loans.created", "description": "New loan record created for a member" },
+    { "type": "library.loans.returned", "description": "Book returned and loan marked as completed" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "books", "table": "books", "fields": ["title", "isbn", "author", "category"], "labelField": "title" },
+      { "name": "authors", "table": "authors", "fields": ["name", "nationality", "genre"], "labelField": "name" },
+      { "name": "members", "table": "members", "fields": ["name", "email", "membership_id", "status"], "labelField": "name" }
+    ]
+  }
+}

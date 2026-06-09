@@ -1,0 +1,54 @@
+{
+  "aenews": "1",
+  "id": "aenews.plugin.port",
+  "name": "Port Management",
+  "slug": "port",
+  "version": "1.0.0",
+  "description": "Complete port and harbor management — track vessels, containers, berths, cargo manifests, dock workers, and shipments with full maritime logistics oversight.",
+  "author": "AENEWS",
+  "license": "MIT",
+  "coreVersion": "1.0.0",
+  "capabilities": [
+    { "type": "search", "name": "searchVessels", "description": "Search for vessels by name, type, IMO number, or status" },
+    { "type": "create", "name": "createShipment", "description": "Create a new shipment for cargo dispatch" },
+    { "type": "read", "name": "getContainer", "description": "Get container by ID with full details and contents" },
+    { "type": "update", "name": "updateBerth", "description": "Update berth allocation, status, and capacity" },
+    { "type": "delete", "name": "deleteVessel", "description": "Remove a vessel from the port system" },
+    { "type": "read", "name": "getCargoManifest", "description": "Get cargo manifest by ID with full item breakdown" },
+    { "type": "search", "name": "searchContainers", "description": "Search for containers by number, type, status, or contents" }
+  ],
+  "entry": {
+    "server": "src/index.ts"
+  },
+  "menus": [
+    { "id": "port-dashboard", "label": "Port Management", "icon": "Ship", "href": "plugin:port:dashboard", "section": "PLUGINS", "order": 10 },
+    { "id": "port-vessels", "label": "Vessels", "icon": "Ship", "href": "plugin:port:vessels", "section": "PLUGINS", "order": 20, "parentId": "port-dashboard" },
+    { "id": "port-containers", "label": "Containers", "icon": "Box", "href": "plugin:port:containers", "section": "PLUGINS", "order": 30, "parentId": "port-dashboard" },
+    { "id": "port-berths", "label": "Berths", "icon": "Anchor", "href": "plugin:port:berths", "section": "PLUGINS", "order": 40, "parentId": "port-dashboard" },
+    { "id": "port-cargo-manifests", "label": "Cargo Manifests", "icon": "FileText", "href": "plugin:cargo-manifests", "section": "PLUGINS", "order": 50, "parentId": "port-dashboard" },
+    { "id": "port-dock-workers", "label": "Dock Workers", "icon": "Users", "href": "plugin:port:dock-workers", "section": "PLUGINS", "order": 60, "parentId": "port-dashboard" }
+  ],
+  "permissions": [
+    { "id": "port.read", "name": "Read", "description": "Read port data including vessels, containers, and berths" },
+    { "id": "port.write", "name": "Write", "description": "Create/Update vessels, containers, shipments, and berths" },
+    { "id": "port.delete", "name": "Delete", "description": "Delete vessels, container records, and shipments" },
+    { "id": "port.admin", "name": "Admin", "description": "Full port administration including settings and user management" }
+  ],
+  "settings": [
+    { "key": "port.name", "type": "string", "label": "Port Name", "defaultValue": "My Port" },
+    { "key": "port.timezone", "type": "string", "label": "Timezone", "defaultValue": "UTC" },
+    { "key": "port.maxVessels", "type": "number", "label": "Maximum Vessels Capacity", "defaultValue": 50 }
+  ],
+  "events": [
+    { "type": "port.vessels.arrived", "description": "Vessel arrived at port" },
+    { "type": "port.containers.loaded", "description": "Container loaded onto a vessel" },
+    { "type": "port.shipments.dispatched", "description": "Shipment dispatched from port" }
+  ],
+  "search": {
+    "entities": [
+      { "name": "vessels", "table": "vessels", "fields": ["name", "imo_number", "type", "status"], "labelField": "name" },
+      { "name": "containers", "table": "containers", "fields": ["container_number", "type", "status", "contents"], "labelField": "container_number" },
+      { "name": "shipments", "table": "shipments", "fields": ["tracking_number", "destination", "status", "vessel"], "labelField": "tracking_number" }
+    ]
+  }
+}
