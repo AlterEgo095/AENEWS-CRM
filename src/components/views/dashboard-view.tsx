@@ -21,6 +21,7 @@ import {
   Boxes,
   Package,
   ArrowUpRight,
+  Shield,
 } from 'lucide-react';
 
 import { useAppStore } from '@/store/app-store';
@@ -641,6 +642,13 @@ export default function DashboardView() {
                 label="View All Tools"
                 description="Browse AI-callable tools registry"
                 variant="outline"
+              />
+              <ActionButton
+                icon={Shield}
+                label="Architecture Validation Suite"
+                description="PHASE FINALE — 15 test categories across 20 plugins"
+                variant="default"
+                onClick={() => useAppStore.getState().setCurrentView('validation-suite')}
               />
             </div>
           </CardContent>

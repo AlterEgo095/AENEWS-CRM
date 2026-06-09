@@ -14,6 +14,7 @@ import {
   User,
   Bell,
   Bot,
+  Shield,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -69,6 +70,7 @@ import CrmContactsView from '@/components/views/crm-contacts-view';
 import ChatView from '@/components/views/chat-view';
 import PluginView from '@/components/views/plugin-view';
 import PluginEntityView from '@/components/views/plugin-entity-view';
+import ValidationSuiteView from '@/components/views/validation-suite-view';
 
 // ============================================================
 // Types
@@ -120,6 +122,7 @@ const coreNavSections: NavSection[] = [
       { id: 'chat', label: 'AI Assistant', icon: Bot },
       { id: 'plugins', label: 'Plugins', icon: Puzzle },
       { id: 'app-store', label: 'App Store', icon: Store },
+      { id: 'validation-suite', label: 'Validation Suite', icon: Shield },
     ],
   },
   {
@@ -544,6 +547,7 @@ const CORE_VIEW_IDS = new Set([
   'plugins',
   'app-store',
   'settings',
+  'validation-suite',
 ]);
 
 // Plugin view IDs that have dedicated components
@@ -591,6 +595,8 @@ function ViewRouter({ currentView }: { currentView: string }) {
         return <AppStoreView />;
       case 'settings':
         return <SettingsView />;
+      case 'validation-suite':
+        return <ValidationSuiteView />;
     }
   }
 
