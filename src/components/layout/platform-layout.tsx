@@ -15,6 +15,8 @@ import {
   Bell,
   Bot,
   Shield,
+  Rocket,
+  Cpu,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -71,6 +73,8 @@ import ChatView from '@/components/views/chat-view';
 import PluginView from '@/components/views/plugin-view';
 import PluginEntityView from '@/components/views/plugin-entity-view';
 import ValidationSuiteView from '@/components/views/validation-suite-view';
+import PhaseOmegaView from '@/components/views/phase-omega-view';
+import PhaseSigmaView from '@/components/views/phase-sigma-view';
 
 // ============================================================
 // Types
@@ -122,6 +126,8 @@ const coreNavSections: NavSection[] = [
       { id: 'chat', label: 'AI Assistant', icon: Bot },
       { id: 'plugins', label: 'Plugins', icon: Puzzle },
       { id: 'app-store', label: 'App Store', icon: Store },
+      { id: 'phase-omega', label: 'Phase Omega', icon: Rocket },
+      { id: 'phase-sigma', label: 'Phase Σ Micro-Kernel', icon: Cpu },
       { id: 'validation-suite', label: 'Validation Suite', icon: Shield },
     ],
   },
@@ -547,6 +553,8 @@ const CORE_VIEW_IDS = new Set([
   'plugins',
   'app-store',
   'settings',
+  'phase-omega',
+  'phase-sigma',
   'validation-suite',
 ]);
 
@@ -595,6 +603,10 @@ function ViewRouter({ currentView }: { currentView: string }) {
         return <AppStoreView />;
       case 'settings':
         return <SettingsView />;
+      case 'phase-omega':
+        return <PhaseOmegaView />;
+      case 'phase-sigma':
+        return <PhaseSigmaView />;
       case 'validation-suite':
         return <ValidationSuiteView />;
     }

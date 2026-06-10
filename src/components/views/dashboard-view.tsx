@@ -179,10 +179,13 @@ export default function DashboardView() {
         const res = await fetch('/api/architecture');
         if (res.ok && !cancelled) {
           const data = await res.json();
-          setArchData(data);
-          const cats = new Set<string>();
-          data.engines.forEach((e: EngineData) => cats.add(e.category));
-          setExpandedCategories(cats);
+          // Only set data if it has the expected shape (with engines array)
+          if (data?.engines && Array.isArray(data.engines)) {
+            setArchData(data);
+            const cats = new Set<string>();
+            data.engines.forEach((e: EngineData) => cats.add(e.category));
+            setExpandedCategories(cats);
+          }
         }
       } catch {
         // ignore
@@ -273,7 +276,7 @@ export default function DashboardView() {
 
   // Group engines by category
   const enginesByCategory = React.useMemo(() => {
-    if (!archData) return {};
+    if (!archData?.engines?.length) return {};
     const groups: Record<string, EngineData[]> = {};
     archData.engines.forEach((e) => {
       if (!groups[e.category]) groups[e.category] = [];
@@ -289,7 +292,7 @@ export default function DashboardView() {
 
   // Plugin stats totals
   const pluginTotals = React.useMemo(() => {
-    if (!archData) return { tools: 0, capabilities: 0, agents: 0, knowledge: 0, schemas: 0, uiExtensions: 0 };
+    if (!archData?.plugins?.length) return { tools: 0, capabilities: 0, agents: 0, knowledge: 0, schemas: 0, uiExtensions: 0 };
     return archData.plugins.reduce(
       (acc, p) => ({
         tools: acc.tools + p.tools,
@@ -319,10 +322,10 @@ export default function DashboardView() {
     });
   }, [uiExtensions, archData, liveCardData]);
 
-  const activeEngines = archData
+  const activeEngines = archData?.engines
     ? archData.engines.filter((e) => e.status === 'active').length
     : 0;
-  const readyEngines = archData
+  const readyEngines = archData?.engines
     ? archData.engines.filter((e) => e.status === 'ready').length
     : 0;
 
@@ -489,13 +492,13 @@ export default function DashboardView() {
             <StatRow
               icon={Package}
               label="Plugins Registered"
-              value={String(archData?.plugins.length ?? '—')}
+              value={String(archData?.plugins?.length ?? '—')}
               loading={archLoading}
             />
             <StatRow
               icon={Zap}
               label="Active Plugins"
-              value={String(archData?.plugins.filter((p) => p.status === 'active').length ?? '—')}
+              value={String(archData?.plugins?.filter((p) => p.status === 'active').length ?? '—')}
               loading={archLoading}
               accent="emerald"
             />
